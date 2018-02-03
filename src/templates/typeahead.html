@@ -1,0 +1,46 @@
+<div
+  class="form-group has-feedback {{form.htmlClass}}"
+  ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess()}">
+
+  <label
+    class="{{form.labelHtmlClass}}"
+    ng-class="{'sr-only': !showTitle()}"
+    for="{{form.key.slice(-1)[0]}}"
+  >{{form.title}}</label>
+
+  <span
+    class="glyphicon glyphicon-info-sign"
+    style="cursor: default;"
+    ng-show="form.fetchErrorMessage"
+    uib-popover="{{form.fetchErrorMessage}}"
+    popover-title="Error Populating Choices"
+    popover-animation="true"
+    popover-placement="right"
+    popover-trigger="'mouseenter'"
+  ></span>
+
+  <input
+    type="text"
+    class="form-control {{form.fieldHtmlClass}}"
+    dynamic-choices
+    sf-field-model
+    sf-changed="form"
+    schema-validate="form"
+    ng-model-options="{ allowInvalid: true }"
+    uib-typeahead="item.value as item.name for item in form.titleMap | filter:{'name': $viewValue} | limitTo:8"
+    typeahead-min-length="0"
+    placeholder="{{form.placeholder || form.schema.placeholder || ('')}}"
+  ></input>
+
+  <span
+    ng-if="form.feedback !== false"
+    class="form-control-feedback"
+    ng-class="evalInScope(form.feedback) || {'glyphicon': true, 'glyphicon-ok': hasSuccess(), 'glyphicon-remove': hasError() }"
+    aria-hidden="true"
+  ></span>
+
+  <div
+    class="help-block"
+    sf-message="form.description">
+  </div>
+</div>

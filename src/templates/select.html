@@ -1,0 +1,43 @@
+<div
+  class="form-group {{form.htmlClass}}"
+  ng-class="{'has-error': hasError(), 'has-success': hasSuccess()}">
+
+  <label
+    class="control-label {{form.labelHtmlClass}}"
+    ng-show="showTitle()"
+  >{{form.title}}</label>
+
+  <span
+    class="glyphicon glyphicon-info-sign"
+    style="cursor: default;"
+    ng-show="form.fetchErrorMessage"
+    uib-popover="{{form.fetchErrorMessage}}"
+    popover-title="Error Populating Choices"
+    popover-animation="true"
+    popover-placement="right"
+    popover-trigger="'mouseenter'"
+  ></span>
+
+  <div class="form-group">
+
+    <button
+      type="button"
+      class="btn btn-default {{form.fieldHtmlClass}}"
+      dynamic-choices
+      sf-field-model
+      sf-changed="form"
+      schema-validate="form"
+      ng-model-options="{ allowInvalid: true }"
+      ng-disabled="form.disabled"
+      data-placeholder="{{form.placeholder || form.schema.placeholder || ('Select One')}}"
+      data-placement="{{form.options.placement || 'bottom-left'}}"
+      bs-options="item.value as item.name for item in form.titleMap"
+      bs-select>
+    </button>
+
+    <div
+      class="help-block"
+      sf-message="form.description">
+    </div>
+  </div>
+</div>

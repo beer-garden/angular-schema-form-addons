@@ -1,0 +1,35 @@
+<div
+  class="form-group {{form.htmlClass}}"
+  ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess()}">
+
+  <label
+    class="form.labelHtmlClass"
+    ng-show="showTitle()"
+  >{{form.title}}</label>
+
+  <div  style="position: relative;">
+    <div class="input-group">
+      <div class="btn btn-default input-group-addon"><span class=" glyphicon glyphicon-calendar"></span></div>
+      <input
+        class="form-control has-feedback {{form.fieldHtmlClass}}"
+        sf-field-model
+        sf-changed="form"
+        schema-validate="form"
+        ng-model-options="{ allowInvalid: true }"
+        date-time>
+      </input>
+    </div>
+
+    <span
+      ng-if="form.feedback !== false"
+      class="form-control-feedback"
+      ng-class="evalInScope(form.feedback) || {'glyphicon': true, 'glyphicon-ok': hasSuccess(), 'glyphicon-remove': hasError() }"
+      aria-hidden="true"
+    ></span>
+  </div>
+
+  <div
+    class="help-block"
+    sf-message="form.description">
+  </div>
+</div>

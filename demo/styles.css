@@ -1,0 +1,9 @@
+
+.select.dropdown-menu {
+  max-height: 10em;
+  overflow: auto;
+}
+
+.clear-right {
+  clear: right;
+}

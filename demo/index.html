@@ -1,0 +1,57 @@
+<html>
+  <head>
+    <title>Testing ASF addon</title>
+  </head>
+
+  <body ng-app="demoApp">
+    <div class="container-fluid" ng-controller="FormController">
+      <div class="col-md-12">
+        <div class="btn-group btn-group-lg" role="group" aria-label="Examples" style="padding: 15px 0;">
+          <button type="button" class="btn btn-secondary" ng-repeat="(key, value) in schemasAndForms" ng-click="load(key)">{{key}}</button>
+        </div>
+      </div>
+
+      <div class="col-sm-6">
+        <form name="demoForm"
+            sf-schema="schema"
+            sf-form="form"
+            sf-model="model"
+            ng-submit="submitForm(demoForm, model)"></form>
+
+        <div uib-alert ng-repeat="alert in alerts" class="alert-danger" close="closeAlert($index)">
+          <strong>Uh-oh!</strong>
+          <span ng-bind=alert></span>
+        </div>
+      </div>
+
+      <div class="col-sm-6">
+        <div class="row">
+          <div class="col-md-12">
+            <h4 style="margin-top: 0;">Model</h4>
+            <pre>{{model | json}}</pre>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <h4>Form</h4>
+            <pre>{{debug.form | json}}</pre>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <h4>Schema</h4>
+            <pre>{{debug.schema | json}}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Run webpack with the demo configuration file (npm run build-demo) to generate this -->
+    <script src="dist/commons.js"></script>
+    <script src="dist/demo.js"></script>
+
+    <!-- This is separate from the app bundle so we can watch for changes easier -->
+    <script src="dist/addons.js"></script>
+
+  </body>
+</html>

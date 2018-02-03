@@ -1,0 +1,38 @@
+<div class="form-group has-feedback {{form.htmlClass}} schema-form-textarea"
+     ng-class="{
+       'has-error': form.disableErrorState !== true && hasError(),
+       'has-success': form.disableSuccessState !== true && hasSuccess(),
+       'has-feedback': form.feedback !== false,
+       'required': form.required === true
+     }">
+
+  <label
+    class="{{form.labelHtmlClass}}"
+    ng-class="{'sr-only': !showTitle()}"
+    for="{{::fieldId(true, false)}}"
+  >{{form.title}}</label>
+
+  <textarea
+    id="{{::fieldId(true, false)}}"
+    name="{{::fieldId(true, false)}}"
+    class="form-control {{form.fieldHtmlClass}}"
+    sf-field-model
+    sf-changed="form"
+    placeholder="{{form.placeholder}}"
+    ng-disabled="form.readonly"
+    ng-model-options="form.ngModelOptions"
+    dictionary
+  ></textarea>
+
+  <span
+    ng-if="form.feedback !== false"
+    class="form-control-feedback"
+    ng-class="evalInScope(form.feedback) || {'glyphicon': true, 'glyphicon-ok': hasSuccess(), 'glyphicon-remove': hasError() }"
+    aria-hidden="true"
+  ></span>
+
+  <div
+    class="help-block"
+    sf-message="form.description">
+  </div>
+</div>
