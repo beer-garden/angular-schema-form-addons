@@ -2,13 +2,28 @@ const path = require('path');
 const webpack = require('webpack');
 
 module.exports = {
+  output: {
+    filename: '[name].js',
+    sourceMapFilename: '[file].map',
+    path: path.resolve(__dirname, 'dist'),
+    publicPath: '/dist/',
+    library: '[name]',
+    libraryTarget: 'umd'
+  },
+
+  externals: {
+    'jquery': 'jquery',
+    'angular': 'angular',
+    'angular-ui-bootstrap': 'angular-ui-bootstrap',
+    'angular-schema-form-bootstrap': 'angular-schema-form-bootstrap',
+    'eonasdan-bootstrap-datetimepicker': 'eonasdan-bootstrap-datetimepicker',
+    'moment': 'moment',
+    'moment-timezone': 'moment-timezone'
+  },
+
   module: {
     rules: [
       {
-        // JS LOADER
-        // Reference: https://github.com/babel/babel-loader
-        // Transpile .js files using babel-loader
-        // Compile ES6 and ES7 into ES5 code
         test: /\.js$/,
         loader: 'babel-loader',
         exclude: /node_modules/

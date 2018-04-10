@@ -4,10 +4,12 @@
   "description": "Awesome Addons for Angular Schema Form.",
   "main": "dist/addons.js",
   "scripts": {
-    "build": "webpack --config webpack.config.prod.js",
-    "watch": "webpack --watch --config webpack.config.prod.js",
-    "build-demo": "webpack --config webpack.config.demo.js",
-    "serve": "webpack-dev-server --config webpack.config.demo.js",
+    "build": "yarn build:dev && yarn build:prod",
+    "build:dev": "webpack --config webpack.dev.js --mode development",
+    "build:prod": "webpack --config webpack.prod.js --mode production",
+    "build:demo": "webpack --config webpack.demo.js --mode development",
+    "clean": "rm -r dist/",
+    "demo": "webpack-dev-server --config webpack.demo.js --mode development",
     "test": "karma start --single-run --browsers PhantomJS",
     "test-watch": "karma start --auto-watch --no-single-run"
   },
@@ -39,6 +41,7 @@
     "babel-core": "^6.25.0",
     "babel-loader": "^7.1.1",
     "babel-polyfill": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
     "babel-preset-es2015": "^6.24.1",
     "bootstrap": "^3.3.7",
     "chai": "^4.1.1",
@@ -66,8 +69,9 @@
     "style-loader": "^0.19.0",
     "tv4": "^1.3.0",
     "url-loader": "^0.6.2",
-    "webpack": "^3.4.1",
-    "webpack-dev-server": "^2.6.1",
+    "webpack": "^4.2.0",
+    "webpack-cli": "^2.0.14",
+    "webpack-dev-server": "^3.1.3",
     "webpack-merge": "^4.1.0"
   },
   "repository": {
