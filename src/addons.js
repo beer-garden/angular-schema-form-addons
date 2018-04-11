@@ -25,7 +25,7 @@ import partitionedObjectTemplate from './templates/partitioned-object.html';
 import nullableObjectTemplate from './templates/nullable-object.html';
 import datetimeTemplate from './templates/datetime.html';
 
-angular.module('schemaFormAddons', ['schemaForm'])
+angular.module('beer-garden.addons', ['schemaForm'])
   .provider('postProcess', postProcessProvider)
   .config(postProcessConfig)
   .config(errorMessageConfig)
