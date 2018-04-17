@@ -13,7 +13,6 @@ module.exports = merge(common, {
 
   output: {
     filename: '[name].js',
-    sourceMapFilename: '[file].map',
     path: path.resolve(__dirname, 'dist'),
     publicPath: '/dist/',
     library: '[name]',
@@ -29,8 +28,6 @@ module.exports = merge(common, {
     'moment': 'moment',
     'moment-timezone': 'moment-timezone'
   },
-
-  devtool: 'source-map',
 
   plugins: [
     new webpack.optimize.UglifyJsPlugin({
