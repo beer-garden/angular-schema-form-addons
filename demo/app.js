@@ -27,9 +27,15 @@ import dynamicChoices from './aspects/dynamic-choices';
 import complex from './aspects/complex';
 import date from './aspects/date';
 
-angular
-  .module('demoApp', ['ui.bootstrap', 'mgcrea.ngStrap', 'schemaForm', 'ngCookies', 'schemaFormAddons'])
-  .controller('FormController', ['$scope', '$http', '$cookies', function($scope, $http, $cookies) {
+angular.module('demoApp', [
+  'ui.bootstrap',
+  'mgcrea.ngStrap',
+  'schemaForm',
+  'ngCookies',
+  'beer-garden.addons',
+])
+.controller('FormController', ['$scope', '$http', '$cookies',
+function($scope, $http, $cookies) {
 
   // Load a different demo
   $scope.load = function(demoType) {
