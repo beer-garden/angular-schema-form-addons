@@ -27,7 +27,7 @@
     sf-changed="form"
     schema-validate="form"
     ng-model-options="{ allowInvalid: true }"
-    uib-typeahead="item.value as item.name for item in form.titleMap | filter:{'name': $viewValue} | limitTo:8"
+    uib-typeahead="item.value as item.name for item in form.titleMap | filter:{'name': $viewValue}"
     typeahead-min-length="0"
     placeholder="{{form.placeholder || form.schema.placeholder || ('')}}"
   ></input>
