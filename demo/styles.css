@@ -1,7 +1,11 @@
 
 .select.dropdown-menu {
-  max-height: 10em;
+  max-height: 195px;
   overflow: auto;
+}
+[uib-typeahead-popup].dropdown-menu{
+    max-height: 195px;
+    overflow: auto;
 }
 
 .clear-right {
