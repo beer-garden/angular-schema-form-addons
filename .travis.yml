@@ -5,6 +5,8 @@ node_js:
 script:
   - echo "Fix the tests at some point please!"
 
+before_deploy: npm run build
+
 deploy:
   provider: npm
   email: buildbot@beer-garden.io
