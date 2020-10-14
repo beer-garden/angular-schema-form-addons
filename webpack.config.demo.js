@@ -19,7 +19,7 @@ module.exports = merge(common, {
     contentBase: path.resolve(__dirname, 'demo'),
     watchContentBase: true,
     stats: 'minimal',
-    port: 8081
+    port: 8078
   },
   plugins: [
     new webpack.ProvidePlugin({
