@@ -89,8 +89,7 @@ function fileUploadDirective($timeout) {
             scope.loadingFile = false;
           }, 0);
 
-          var prefix = 'file:' + file.name + ';';
-          ngModel.$setViewValue(prefix + e.target.result);
+          ngModel.$setViewValue(e.target.result);
         };
 
         reader.readAsDataURL(file);
