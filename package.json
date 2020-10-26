@@ -73,5 +73,12 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/beer-garden/angular-schema-form-addons.git"
+  },
+  "dependencies": {
+    "bootstrap-fileinput": "^5.1.3",
+    "form-builder": "0.0.1",
+    "form-data": "^3.0.0",
+    "fs": "0.0.1-security",
+    "uuid-random": "^1.3.2"
   }
 }

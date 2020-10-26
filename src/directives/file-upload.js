@@ -1,6 +1,57 @@
 import angular from 'angular';
 
 fileUploadDirective.$inject = ['$timeout'];
+
+class FileUploader{
+  constructor(){
+    this.chunkSize = 255 * 1024;
+    this.file_name = null;
+
+    console.log("Built the FileUploader!");
+  }
+
+  readBlob(blob){
+    return this.reader.readAsDataURL(blob);
+  }
+
+  buildRequest(offset){
+    console.log("Called the buildRequest!");
+    console.log("@buildRequest " + this.file_name);
+    var reader = new FileReader();
+
+    reader.onload = (e) => {
+      var http = new XMLHttpRequest();
+      var url = 'http://localhost:8080/api/v1/files/?file_name='+this.file_name;
+      var params = 'data='+e.target.result+'&offset='+(offset);
+      http.open('POST', url, true);
+
+      //Send the proper header information along with the request
+      http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+      http.send(params);
+    }
+
+    var chunk = this.file.slice( offset, offset + this.chunkSize );
+    reader.readAsDataURL(chunk);
+  }
+
+  uploadFile(file){
+    console.log("Called the buildRequest!");
+    this.file = file;
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4) {
+        this.file_name = xhr.response;
+        console.log(this.file_name);
+        for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
+          this.buildRequest(offset);
+        }
+      }
+    }
+    xhr.open('GET', 'http://localhost:8080/api/v1/files/id/?', true);
+    xhr.send('');
+  }
+}
+
 function fileUploadDirective($timeout) {
   return {
     restrict: 'A',
@@ -70,29 +121,34 @@ function fileUploadDirective($timeout) {
           return;
         }
 
-        var reader = new FileReader();
+        var f_up = new FileUploader();
 
+//        var reader = new FileReader();
+//
         scope.file = file;
         scope.fileName = file.name;
         scope.hasFile = true;
         scope.file.ext = file.name.split('.').slice(-1)[0];
-        scope.file.src = URL.createObjectURL(file);
+//        scope.file.src = URL.createObjectURL(file);
+//
+//        reader.onloadstart = function(e) {
+//          $timeout(function() {
+//            scope.loadingFile = true;
+//          }, 0);
+//        }
+//
+//        reader.onload = function(e) {
+//          $timeout(function() {
+//            scope.loadingFile = false;
+//          }, 0);
 
-        reader.onloadstart = function(e) {
-          $timeout(function() {
-            scope.loadingFile = true;
-          }, 0);
-        }
+          f_up.uploadFile(file);
 
-        reader.onload = function(e) {
-          $timeout(function() {
-            scope.loadingFile = false;
-          }, 0);
+          var prefix = 'file:' + file.name;
+          ngModel.$setViewValue(prefix); // + e.target.result);
+//        };
 
-          ngModel.$setViewValue(e.target.result);
-        };
-
-        reader.readAsDataURL(file);
+//        reader.readAsDataURL(file);
         scope.$apply();
       };
 
