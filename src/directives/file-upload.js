@@ -6,8 +6,6 @@ class FileUploader{
   constructor(){
     this.chunkSize = 255 * 1024;
     this.file_name = null;
-
-    console.log("Built the FileUploader!");
   }
 
   readBlob(blob){
@@ -15,19 +13,17 @@ class FileUploader{
   }
 
   buildRequest(offset){
-    console.log("Called the buildRequest!");
-    console.log("@buildRequest " + this.file_name);
     var reader = new FileReader();
 
     reader.onload = (e) => {
       var http = new XMLHttpRequest();
-      var url = 'http://localhost:8080/api/v1/files/?file_name='+this.file_name;
-      var params = 'data='+e.target.result+'&offset='+(offset);
+      var url = 'http://localhost:8080/api/v1/files/?file_id='+this.file_name;
+      var params = {'data': e.target.result.split(",")[1], 'offset': offset, 'chunk_size': this.chunkSize};
       http.open('POST', url, true);
 
       //Send the proper header information along with the request
       http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-      http.send(params);
+      http.send(JSON.stringify(params));
     }
 
     var chunk = this.file.slice( offset, offset + this.chunkSize );
@@ -35,19 +31,17 @@ class FileUploader{
   }
 
   uploadFile(file){
-    console.log("Called the buildRequest!");
     this.file = file;
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
         this.file_name = xhr.response;
-        console.log(this.file_name);
         for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
           this.buildRequest(offset);
         }
       }
     }
-    xhr.open('GET', 'http://localhost:8080/api/v1/files/id/?', true);
+    xhr.open('GET', 'http://localhost:8080/api/v1/files/id/?file_name='+encodeURIComponent(file.name), true);
     xhr.send('');
   }
 }
