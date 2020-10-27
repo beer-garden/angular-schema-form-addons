@@ -21,6 +21,16 @@ class FileUploader{
       var params = {'data': e.target.result.split(",")[1], 'offset': offset, 'chunk_size': this.chunkSize};
       http.open('POST', url, true);
 
+
+      http.onreadystatechange = () => {
+        if (http.readyState === 4) {
+          this.chunks_complete++;
+          if (this.chunks_complete >= this.num_chunks){
+            alert("File upload complete!");
+          }
+        }
+      }
+
       //Send the proper header information along with the request
       http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
       http.send(JSON.stringify(params));
@@ -30,12 +40,16 @@ class FileUploader{
     reader.readAsDataURL(chunk);
   }
 
-  uploadFile(file){
+  uploadFile(file, ngModel, scope){
     this.file = file;
+    this.num_chunks = Math.ceil(file.size/this.chunkSize);
+    this.chunks_complete = 0;
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
         this.file_name = xhr.response;
+        ngModel.$setViewValue(this.file_name);
+        scope.$apply();
         for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
           this.buildRequest(offset);
         }
@@ -101,50 +115,30 @@ function fileUploadDirective($timeout) {
       }
 
       var getFile = function(file) {
+        if(confirm("Would you like to upload this file?")){
+            // Reset all errors so we start with a clean slate
+            Object.keys(ngModel.$error).forEach(function(k) {
+              ngModel.$setValidity(k, true);
+            });
 
-        // Reset all errors so we start with a clean slate
-        Object.keys(ngModel.$error).forEach(function(k) {
-          ngModel.$setValidity(k, true);
-        });
+            if(!file) {
+              return;
+            }
 
-        if(!file) {
-          return;
+            if(!validateFile(file)) {
+              return;
+            }
+
+            var f_up = new FileUploader();
+            alert("Starting the upload process. Please wait.");
+
+            scope.file = file;
+            scope.fileName = file.name;
+            scope.hasFile = true;
+            scope.file.ext = file.name.split('.').slice(-1)[0];
+            f_up.uploadFile(file, ngModel, scope);
         }
-
-        if(!validateFile(file)) {
-          return;
-        }
-
-        var f_up = new FileUploader();
-
-//        var reader = new FileReader();
-//
-        scope.file = file;
-        scope.fileName = file.name;
-        scope.hasFile = true;
-        scope.file.ext = file.name.split('.').slice(-1)[0];
-//        scope.file.src = URL.createObjectURL(file);
-//
-//        reader.onloadstart = function(e) {
-//          $timeout(function() {
-//            scope.loadingFile = true;
-//          }, 0);
-//        }
-//
-//        reader.onload = function(e) {
-//          $timeout(function() {
-//            scope.loadingFile = false;
-//          }, 0);
-
-          f_up.uploadFile(file);
-
-          var prefix = 'file:' + file.name;
-          ngModel.$setViewValue(prefix); // + e.target.result);
-//        };
-
-//        reader.readAsDataURL(file);
-        scope.$apply();
-      };
+      }
 
       scope.removeFile = function(e) {
         e.preventDefault();
