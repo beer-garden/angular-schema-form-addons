@@ -12,21 +12,30 @@ class FileUploader{
     return this.reader.readAsDataURL(blob);
   }
 
-  buildRequest(offset){
+  buildRequest(offset, retries){
     var reader = new FileReader();
 
     reader.onload = (e) => {
       var http = new XMLHttpRequest();
       var url = 'http://localhost:8080/api/v1/files/?file_id='+this.file_name;
-      var params = {'data': e.target.result.split(",")[1], 'offset': offset, 'chunk_size': this.chunkSize};
+      var params = {'data': e.target.result.split(",")[1], 'offset': offset};
       http.open('POST', url, true);
 
 
       http.onreadystatechange = () => {
         if (http.readyState === 4) {
-          this.chunks_complete++;
-          if (this.chunks_complete >= this.num_chunks){
-            alert("File upload complete!");
+          if (http.status == 200){
+            this.chunks_complete++;
+            if (this.chunks_complete >= this.num_chunks){
+              alert("File upload complete!");
+            }
+          }
+          else if (retries > 0){
+            this.buildRequest(offset, retries-1);
+          }
+          else if (!this.failed){
+            this.failed = true;
+            alert("File upload failed!");
           }
         }
       }
@@ -36,7 +45,7 @@ class FileUploader{
       http.send(JSON.stringify(params));
     }
 
-    var chunk = this.file.slice( offset, offset + this.chunkSize );
+    var chunk = this.file.slice( offset*this.chunkSize, offset*this.chunkSize + this.chunkSize );
     reader.readAsDataURL(chunk);
   }
 
@@ -44,18 +53,22 @@ class FileUploader{
     this.file = file;
     this.num_chunks = Math.ceil(file.size/this.chunkSize);
     this.chunks_complete = 0;
+    this.failed = false;
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
         this.file_name = xhr.response;
-        ngModel.$setViewValue(this.file_name);
+        ngModel.$setViewValue("FileID: "+this.file_name);
+        scope.file_id = this.file_name;
         scope.$apply();
         for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
-          this.buildRequest(offset);
+          this.buildRequest(Math.ceil(offset/this.chunkSize), 2);
         }
       }
     }
-    xhr.open('GET', 'http://localhost:8080/api/v1/files/id/?file_name='+encodeURIComponent(file.name), true);
+    var url = 'http://localhost:8080/api/v1/files/id/?file_name='+encodeURIComponent(file.name) +
+            '&file_size='+ (this.file.size) + '&chunk_size=' + (this.chunkSize);
+    xhr.open('GET', url, true);
     xhr.send('');
   }
 }
@@ -115,7 +128,7 @@ function fileUploadDirective($timeout) {
       }
 
       var getFile = function(file) {
-        if(confirm("Would you like to upload this file?")){
+        if(confirm("Would you like to upload this file? You will be alerted when the upload is complete.")){
             // Reset all errors so we start with a clean slate
             Object.keys(ngModel.$error).forEach(function(k) {
               ngModel.$setValidity(k, true);
@@ -130,22 +143,28 @@ function fileUploadDirective($timeout) {
             }
 
             var f_up = new FileUploader();
-            alert("Starting the upload process. Please wait.");
 
             scope.file = file;
             scope.fileName = file.name;
             scope.hasFile = true;
             scope.file.ext = file.name.split('.').slice(-1)[0];
+            scope.file_id = undefined;
             f_up.uploadFile(file, ngModel, scope);
         }
       }
 
       scope.removeFile = function(e) {
+        var http = new XMLHttpRequest();
+        var url = 'http://localhost:8080/api/v1/files/?file_id='+scope.file_id;
+        http.open('DELETE', url, true);
+        http.send('');
+
         e.preventDefault();
         e.stopPropagation();
         scope.file = undefined;
         scope.hasFile = false;
         scope.fileName = undefined;
+        scope.file_id = undefined;
         ngModel.$setViewValue(undefined);
       }
 
