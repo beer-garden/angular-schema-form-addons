@@ -57,12 +57,18 @@ class FileUploader{
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
-        this.file_name = xhr.response;
-        ngModel.$setViewValue("FileID: "+this.file_name);
-        scope.file_id = this.file_name;
-        scope.$apply();
-        for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
-          this.buildRequest(Math.ceil(offset/this.chunkSize), 2);
+        var response = JSON.parse(xhr.response);
+        if ('id' in response) {
+          this.file_name = response['id'];
+          ngModel.$setViewValue("BGFileID: "+this.file_name);
+          scope.file_id = this.file_name;
+          scope.$apply();
+          for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
+            this.buildRequest(Math.ceil(offset/this.chunkSize), 2);
+          }
+        }
+        else {
+          alert('Could not retrieve a FileID for upload, message: ' + response['message']);
         }
       }
     }
