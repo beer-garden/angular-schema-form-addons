@@ -12,7 +12,6 @@ describe("Dictionary directive", function() {
 
   var $compile, $rootScope, customHtml, $scope, element, linker
 
-
   beforeEach(angular.mock.module(testModule.name))
   beforeEach(angular.mock.inject(function(_$compile_, _$rootScope_) {
     $compile = _$compile_;
