@@ -60,7 +60,7 @@ class FileUploader{
         var response = JSON.parse(xhr.response);
         if ('id' in response) {
           this.file_name = response['id'];
-          ngModel.$setViewValue("BGFileID: "+this.file_name);
+          ngModel.$setViewValue(this.file_name);
           scope.file_id = this.file_name;
           scope.$apply();
           for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
