@@ -58,8 +58,8 @@ class FileUploader{
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
         var response = JSON.parse(xhr.response);
-        if ('id' in response) {
-          this.file_name = response['id'];
+        if ('file_id' in response) {
+          this.file_name = response['file_id'];
           ngModel.$setViewValue(this.file_name);
           scope.file_id = this.file_name;
           scope.$apply();
