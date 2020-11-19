@@ -28,12 +28,12 @@ class FileUploader{
   setVisible(object, visible, msg="", reset = false){
     if (visible) {
       object.setAttribute('style', 'visibility: visible');
-      if (msg != "" || reset)
+      if ((msg != "" && msg != null) || reset)
         object.setAttribute('title', msg);
     }
     else {
       object.setAttribute('style', 'visibility: hidden');
-      if (msg != "" || reset)
+      if ((msg != "" && msg != null) || reset)
         object.setAttribute('Title', msg);
     }
   }
@@ -42,11 +42,40 @@ class FileUploader{
     scope.fileProgressBar.setAttribute('value', Math.ceil((number / this.numChunks)*100));
   }
 
+  checkFileStatus(scope){
+      var http = new XMLHttpRequest();
+      // TODO - Make sure that we figure out the localhost proxy issue
+      var url = 'http://localhost:8080/api/v1/files/?file_id='+this.fileName+'&verify=true';
+      http.open('GET', url, true);
+
+      http.onreadystatechange = () => {
+        if (http.readyState === 4) {
+          var response = JSON.parse(http.response);
+          if ('valid' in response) {
+            // Convert the value to a boolean
+            this.fileValid = !!response['valid'];
+            if (this.fileValid) {
+              this.setVisible(scope.fileCompleted, true, response['message']);
+            }
+            else {
+              this.setVisible(scope.fileFailed, true, response['message']);
+            }
+          }
+          else {
+            this.setVisible(scope.fileFailed, true, response['message']);
+          }
+        }
+      }
+      http.send('');
+  }
+
+
   buildRequest(scope, offset, retries){
     var reader = new FileReader();
 
     reader.onload = (e) => {
       var http = new XMLHttpRequest();
+      // TODO - Make sure that we figure out the localhost proxy issue
       var url = 'http://localhost:8080/api/v1/files/?file_id='+this.fileName;
       var params = {'data': e.target.result.split(",")[1], 'offset': offset};
       http.open('POST', url, true);
@@ -58,8 +87,7 @@ class FileUploader{
             this.chunksComplete++;
             this.updateProgressBar(scope, this.chunksComplete);
             if (this.chunksComplete >= this.numChunks && !this.failed){
-                this.setVisible(scope.fileCompleted, true, "File upload completed!");
-                this.fileValid = true;
+                this.checkFileStatus(scope);
             }
           }
           else if (retries > 0){
@@ -104,6 +132,7 @@ class FileUploader{
       }
     }
 
+    // TODO - Make sure that we figure out the localhost proxy issue
     var url = 'http://localhost:8080/api/v1/files/id/?file_name='+encodeURIComponent(file.name) +
             '&file_size='+ (this.file.size) + '&chunk_size=' + (this.chunkSize);
     xhr.open('GET', url, true);
@@ -194,6 +223,7 @@ function fileUploadDirective($timeout) {
       }
 
       scope.removeFile = function(e) {
+        // TODO - Make sure that we figure out the localhost proxy issue
         var http = new XMLHttpRequest();
         var url = 'http://localhost:8080/api/v1/files/?file_id='+scope.fileUploader.fileName;
         http.open('DELETE', url, true);
