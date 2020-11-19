@@ -4,16 +4,42 @@ fileUploadDirective.$inject = ['$timeout'];
 
 class FileUploader{
   constructor(){
+    this.file = null;
+    this.numChunks = 0;
+    this.failed = false;
+    this.fileName = null;
+    this.fileValid = false;
+    this.chunksComplete = 0;
     this.chunkSize = 255 * 1024;
-    this.file_name = null;
   }
 
-  readBlob(blob){
-    return this.reader.readAsDataURL(blob);
+  reset(scope) {
+    this.file = null;
+    this.numChunks = 0;
+    this.failed = false;
+    this.fileName = null;
+    this.fileValid = false;
+    this.chunksComplete = 0;
+    this.updateProgressBar(scope, 0);
+    this.setVisible(scope.fileFailed, false, "", true);
+    this.setVisible(scope.fileCompleted, false, "", true);
   }
 
-  updateProgressBar(scope){
-    scope.fileProgressBar.setAttribute('value',Math.ceil((this.chunks_complete / this.num_chunks)*100));
+  setVisible(object, visible, msg="", reset = false){
+    if (visible) {
+      object.setAttribute('style', 'visibility: visible');
+      if (msg != "" || reset)
+        object.setAttribute('title', msg);
+    }
+    else {
+      object.setAttribute('style', 'visibility: hidden');
+      if (msg != "" || reset)
+        object.setAttribute('Title', msg);
+    }
+  }
+
+  updateProgressBar(scope, number){
+    scope.fileProgressBar.setAttribute('value', Math.ceil((number / this.numChunks)*100));
   }
 
   buildRequest(scope, offset, retries){
@@ -21,7 +47,7 @@ class FileUploader{
 
     reader.onload = (e) => {
       var http = new XMLHttpRequest();
-      var url = 'http://localhost:8080/api/v1/files/?file_id='+this.file_name;
+      var url = 'http://localhost:8080/api/v1/files/?file_id='+this.fileName;
       var params = {'data': e.target.result.split(",")[1], 'offset': offset};
       http.open('POST', url, true);
 
@@ -29,12 +55,11 @@ class FileUploader{
       http.onreadystatechange = () => {
         if (http.readyState === 4) {
           if (http.status == 200){
-            this.chunks_complete++;
-            this.updateProgressBar(scope);
-            if (this.chunks_complete >= this.num_chunks && !this.failed){
-//              alert("File upload complete!");
-                scope.fileCompleted.setAttribute('style', 'visibility: visible');
-                scope.fileValid = true;
+            this.chunksComplete++;
+            this.updateProgressBar(scope, this.chunksComplete);
+            if (this.chunksComplete >= this.numChunks && !this.failed){
+                this.setVisible(scope.fileCompleted, true, "File upload completed!");
+                this.fileValid = true;
             }
           }
           else if (retries > 0){
@@ -42,9 +67,8 @@ class FileUploader{
           }
           else if (!this.failed){
             this.failed = true;
-//            alert("File upload failed!");
-                scope.fileFailed.setAttribute('style', 'visibility: visible');
-                scope.fileValid = false;
+            this.setVisible(scope.fileFailed, true, ('File upload failed; tried to send chunk: ' + offset + ' too many times.'));
+            this.fileValid = false;
           }
         }
       }
@@ -60,26 +84,22 @@ class FileUploader{
 
   uploadFile(file, ngModel, scope){
     this.file = file;
-    this.num_chunks = Math.ceil(file.size/this.chunkSize);
-    this.chunks_complete = 0;
-    this.failed = false;
+    this.numChunks = Math.ceil(file.size/this.chunkSize);
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
         var response = JSON.parse(xhr.response);
         if ('file_id' in response) {
-          this.file_name = response['file_id'];
-          ngModel.$setViewValue(this.file_name);
-          scope.file_id = this.file_name;
+          this.fileName = response['file_id'];
+          ngModel.$setViewValue(this.fileName);
           scope.$apply();
           for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
             this.buildRequest(scope, Math.ceil(offset/this.chunkSize), 2);
           }
         }
         else {
-//          alert('Could not retrieve a FileID for upload, message: ' + response['message']);
-            scope.fileFailed.setAttribute('style', 'visibility: visible');
-            scope.fileValid = false;
+            this.setVisible(scope.fileFailed, true, ('File upload failed; could not retrieve a FileID for upload, message: ' + response['message']));
+            this.fileValid = false;
         }
       }
     }
@@ -98,11 +118,11 @@ function fileUploadDirective($timeout) {
     scope: true,
     priority: 500,
     link: function(scope, element, attrs, ngModel) {
-      scope.ngModel = ngModel;
-      scope.file = undefined;
       scope.hasFile = false;
+      scope.file = undefined;
+      scope.ngModel = ngModel;
       scope.fileName = undefined;
-      scope.fileValid = false;
+      scope.fileUploader = new FileUploader();
 
       // Used to trigger the click() event on the hidden file input field.
       scope.fileInput = element[0].querySelector('.file-upload-field');
@@ -113,7 +133,7 @@ function fileUploadDirective($timeout) {
 
       scope.validateField = function(value) {
         if (value === null || value === undefined || value.trim().length === 0) {
-          if (scope.form.required && !scope.fileValid) {
+          if (scope.form.required && !scope.fileUploader.fileValid) {
             // 302 is the error code for required
             ngModel.$setValidity('tv4-302', false);
           }
@@ -151,7 +171,7 @@ function fileUploadDirective($timeout) {
       }
 
       var getFile = function(file) {
-        if(confirm("Would you like to upload this file? You will be alerted when the upload is complete.")){
+        if(confirm("Would you like to upload this file?")){
             // Reset all errors so we start with a clean slate
             Object.keys(ngModel.$error).forEach(function(k) {
               ngModel.$setValidity(k, true);
@@ -165,20 +185,17 @@ function fileUploadDirective($timeout) {
               return;
             }
 
-            var f_up = new FileUploader();
-
             scope.file = file;
             scope.fileName = file.name;
             scope.hasFile = true;
             scope.file.ext = file.name.split('.').slice(-1)[0];
-            scope.file_id = undefined;
-            f_up.uploadFile(file, ngModel, scope);
+            scope.fileUploader.uploadFile(file, ngModel, scope);
         }
       }
 
       scope.removeFile = function(e) {
         var http = new XMLHttpRequest();
-        var url = 'http://localhost:8080/api/v1/files/?file_id='+scope.file_id;
+        var url = 'http://localhost:8080/api/v1/files/?file_id='+scope.fileUploader.fileName;
         http.open('DELETE', url, true);
         http.send('');
 
@@ -187,11 +204,7 @@ function fileUploadDirective($timeout) {
         scope.file = undefined;
         scope.hasFile = false;
         scope.fileName = undefined;
-        scope.file_id = undefined;
-        scope.fileProgressBar.setAttribute('value',0);
-        scope.fileFailed.setAttribute('style', 'visibility: hidden');
-        scope.fileCompleted.setAttribute('style', 'visibility: hidden');
-        scope.fileValid = false;
+        scope.fileUploader.reset(scope);
         ngModel.$setViewValue(undefined);
       }
 
