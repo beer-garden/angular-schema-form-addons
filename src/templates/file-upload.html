@@ -31,6 +31,17 @@
     </span>
   </div>
 
+  <div>
+      <progress
+        id="{{form.key.slice(-1)[0]}}_progress_bar"
+        value="0"
+        max="100"
+        class="file-upload-progress-bar"
+      ></progress>
+      <i class="glyphicon glyphicon-check file-upload-completed" style="visibility: hidden">Complete</i>
+      <i class="glyphicon glyphicon-remove file-upload-failed" style="visibility: hidden">Incomplete</i>
+  </div>
+
   <div
     class="help-block"
     sf-message="form.description">

@@ -12,7 +12,11 @@ class FileUploader{
     return this.reader.readAsDataURL(blob);
   }
 
-  buildRequest(offset, retries){
+  updateProgressBar(scope){
+    scope.fileProgressBar.setAttribute('value',Math.ceil((this.chunks_complete / this.num_chunks)*100));
+  }
+
+  buildRequest(scope, offset, retries){
     var reader = new FileReader();
 
     reader.onload = (e) => {
@@ -26,8 +30,11 @@ class FileUploader{
         if (http.readyState === 4) {
           if (http.status == 200){
             this.chunks_complete++;
-            if (this.chunks_complete >= this.num_chunks){
-              alert("File upload complete!");
+            this.updateProgressBar(scope);
+            if (this.chunks_complete >= this.num_chunks && !this.failed){
+//              alert("File upload complete!");
+                scope.fileCompleted.setAttribute('style', 'visibility: visible');
+                scope.fileValid = true;
             }
           }
           else if (retries > 0){
@@ -35,7 +42,9 @@ class FileUploader{
           }
           else if (!this.failed){
             this.failed = true;
-            alert("File upload failed!");
+//            alert("File upload failed!");
+                scope.fileFailed.setAttribute('style', 'visibility: visible');
+                scope.fileValid = false;
           }
         }
       }
@@ -64,14 +73,17 @@ class FileUploader{
           scope.file_id = this.file_name;
           scope.$apply();
           for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
-            this.buildRequest(Math.ceil(offset/this.chunkSize), 2);
+            this.buildRequest(scope, Math.ceil(offset/this.chunkSize), 2);
           }
         }
         else {
-          alert('Could not retrieve a FileID for upload, message: ' + response['message']);
+//          alert('Could not retrieve a FileID for upload, message: ' + response['message']);
+            scope.fileFailed.setAttribute('style', 'visibility: visible');
+            scope.fileValid = false;
         }
       }
     }
+
     var url = 'http://localhost:8080/api/v1/files/id/?file_name='+encodeURIComponent(file.name) +
             '&file_size='+ (this.file.size) + '&chunk_size=' + (this.chunkSize);
     xhr.open('GET', url, true);
@@ -90,13 +102,18 @@ function fileUploadDirective($timeout) {
       scope.file = undefined;
       scope.hasFile = false;
       scope.fileName = undefined;
+      scope.fileValid = false;
 
       // Used to trigger the click() event on the hidden file input field.
       scope.fileInput = element[0].querySelector('.file-upload-field');
+      scope.fileProgressBar = element[0].querySelector('.file-upload-progress-bar');
+      scope.fileCompleted = element[0].querySelector('.file-upload-completed');
+      scope.fileFailed = element[0].querySelector('.file-upload-failed');
+
 
       scope.validateField = function(value) {
         if (value === null || value === undefined || value.trim().length === 0) {
-          if (scope.form.required) {
+          if (scope.form.required && !scope.fileValid) {
             // 302 is the error code for required
             ngModel.$setValidity('tv4-302', false);
           }
@@ -171,6 +188,10 @@ function fileUploadDirective($timeout) {
         scope.hasFile = false;
         scope.fileName = undefined;
         scope.file_id = undefined;
+        scope.fileProgressBar.setAttribute('value',0);
+        scope.fileFailed.setAttribute('style', 'visibility: hidden');
+        scope.fileCompleted.setAttribute('style', 'visibility: hidden');
+        scope.fileValid = false;
         ngModel.$setViewValue(undefined);
       }
 
