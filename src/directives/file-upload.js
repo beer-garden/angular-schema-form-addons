@@ -11,16 +11,23 @@ class FileUploader{
     this.fileValid = false;
     this.chunksComplete = 0;
     this.chunkSize = 255 * 1024;
+    this.api_path = '/api/v1/files/';
+    // Tricky stuff to parse out the host information
+    var a = document.createElement('a');
+    a.href = document.baseURI;
+    this.host = 'http://' + a.host;
   }
 
   reset(scope) {
+    // Have to do this first to avoid divide by zero (checks the numChunks field)
+    this.updateProgressBar(scope, 0);
+    // The normal reset routine
     this.file = null;
     this.numChunks = 0;
     this.failed = false;
     this.fileName = null;
     this.fileValid = false;
     this.chunksComplete = 0;
-    this.updateProgressBar(scope, 0);
     this.setVisible(scope.fileFailed, false, "", true);
     this.setVisible(scope.fileCompleted, false, "", true);
   }
@@ -45,7 +52,8 @@ class FileUploader{
   checkFileStatus(scope){
       var http = new XMLHttpRequest();
       // TODO - Make sure that we figure out the localhost proxy issue
-      var url = 'http://localhost:8080/api/v1/files/?file_id='+this.fileName+'&verify=true';
+      var url = this.host + this.api_path + '?file_id='+this.fileName+'&verify=true';
+//      console.log("trying to get url: " + url);
       http.open('GET', url, true);
 
       http.onreadystatechange = () => {
@@ -76,7 +84,8 @@ class FileUploader{
     reader.onload = (e) => {
       var http = new XMLHttpRequest();
       // TODO - Make sure that we figure out the localhost proxy issue
-      var url = 'http://localhost:8080/api/v1/files/?file_id='+this.fileName;
+      var url = this.host + this.api_path + '?file_id='+this.fileName;
+//      console.log("trying to get url: " + url);
       var params = {'data': e.target.result.split(",")[1], 'offset': offset};
       http.open('POST', url, true);
 
@@ -115,7 +124,8 @@ class FileUploader{
     this.numChunks = Math.ceil(file.size/this.chunkSize);
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4) {
+      if (xhr.readyState === 4 && xhr.status == 200) {
+//        console.log("Received response: " + xhr.response);
         var response = JSON.parse(xhr.response);
         if ('file_id' in response) {
           this.fileName = response['file_id'];
@@ -133,8 +143,8 @@ class FileUploader{
     }
 
     // TODO - Make sure that we figure out the localhost proxy issue
-    var url = 'http://localhost:8080/api/v1/files/id/?file_name='+encodeURIComponent(file.name) +
-            '&file_size='+ (this.file.size) + '&chunk_size=' + (this.chunkSize);
+    var url = this.host  + this.api_path + 'id/?file_name='+encodeURIComponent(file.name) + '&file_size='+ (this.file.size) + '&chunk_size=' + (this.chunkSize);
+//    console.log("trying to get url: " + url);
     xhr.open('GET', url, true);
     xhr.send('');
   }
@@ -225,7 +235,7 @@ function fileUploadDirective($timeout) {
       scope.removeFile = function(e) {
         // TODO - Make sure that we figure out the localhost proxy issue
         var http = new XMLHttpRequest();
-        var url = 'http://localhost:8080/api/v1/files/?file_id='+scope.fileUploader.fileName;
+        var url = scope.fileUploader.host + scope.fileUploader.api_path + '?file_id='+scope.fileUploader.fileName;
         http.open('DELETE', url, true);
         http.send('');
 
