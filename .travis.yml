@@ -1,9 +1,12 @@
+os: linux
+dist: xenial
 language: node_js
+
 node_js:
-  - lts/*
+- lts/*
 
 script:
-  - echo "Fix the tests at some point please!"
+- echo "Fix the tests at some point please!"
 
 before_deploy: npm run build
 
@@ -12,7 +15,6 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    branch: develop
     repo: beer-garden/angular-schema-form-addons
   email: beerbuildbot
   api_key:
