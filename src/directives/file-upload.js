@@ -11,11 +11,7 @@ class FileUploader{
     this.fileValid = false;
     this.chunksComplete = 0;
     this.chunkSize = 255 * 1024;
-    this.api_path = '/api/v1/files/';
-    // Tricky stuff to parse out the host information
-    var a = document.createElement('a');
-    a.href = document.baseURI;
-    this.host = 'http://' + a.host;
+    this.apiPath = '/api/v1/files/';
   }
 
   reset(scope) {
@@ -50,15 +46,9 @@ class FileUploader{
   }
 
   checkFileStatus(scope){
-      var http = new XMLHttpRequest();
-      // TODO - Make sure that we figure out the localhost proxy issue
-      var url = this.host + this.api_path + '?file_id='+this.fileName+'&verify=true';
-//      console.log("trying to get url: " + url);
-      http.open('GET', url, true);
-
-      http.onreadystatechange = () => {
-        if (http.readyState === 4) {
-          var response = JSON.parse(http.response);
+    $.get(this.apiPath+'?file_id='+this.fileName+'&verify=true')
+      .done( (data) => {
+          var response = JSON.parse(data);
           if ('valid' in response) {
             // Convert the value to a boolean
             this.fileValid = !!response['valid'];
@@ -73,8 +63,11 @@ class FileUploader{
             this.setVisible(scope.fileFailed, true, response['message']);
           }
         }
-      }
-      http.send('');
+      )
+      .fail( () => {
+          this.setVisible(scope.fileFailed, true, "Could reach Beer Garden to verify file.");
+        }
+      );
   }
 
 
@@ -82,37 +75,33 @@ class FileUploader{
     var reader = new FileReader();
 
     reader.onload = (e) => {
-      var http = new XMLHttpRequest();
-      // TODO - Make sure that we figure out the localhost proxy issue
-      var url = this.host + this.api_path + '?file_id='+this.fileName;
-//      console.log("trying to get url: " + url);
-      var params = {'data': e.target.result.split(",")[1], 'offset': offset};
-      http.open('POST', url, true);
-
-
-      http.onreadystatechange = () => {
-        if (http.readyState === 4) {
-          if (http.status == 200){
+      $.post(this.apiPath+'?file_id='+this.fileName,
+        JSON.stringify(
+          {
+            'data':  e.target.result.split(",")[1],
+            'offset': offset,
+          }
+        )
+      )
+        .done( () => {
             this.chunksComplete++;
             this.updateProgressBar(scope, this.chunksComplete);
             if (this.chunksComplete >= this.numChunks && !this.failed){
                 this.checkFileStatus(scope);
             }
           }
-          else if (retries > 0){
-            this.buildRequest(offset, retries-1);
+        )
+        .fail( () => {
+            if (retries > 0) {
+              this.buildRequest(offset, retries-1);
+            }
+            else if (!this.failed) {
+              this.failed = true;
+              this.setVisible(scope.fileFailed, true, ('File upload failed; tried to send chunk: ' + offset + ' too many times.'));
+              this.fileValid = false;
+            }
           }
-          else if (!this.failed){
-            this.failed = true;
-            this.setVisible(scope.fileFailed, true, ('File upload failed; tried to send chunk: ' + offset + ' too many times.'));
-            this.fileValid = false;
-          }
-        }
-      }
-
-      //Send the proper header information along with the request
-      http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-      http.send(JSON.stringify(params));
+        );
     }
 
     var chunk = this.file.slice( offset*this.chunkSize, offset*this.chunkSize + this.chunkSize );
@@ -122,31 +111,28 @@ class FileUploader{
   uploadFile(file, ngModel, scope){
     this.file = file;
     this.numChunks = Math.ceil(file.size/this.chunkSize);
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4 && xhr.status == 200) {
-//        console.log("Received response: " + xhr.response);
-        var response = JSON.parse(xhr.response);
-        if ('file_id' in response) {
+    $.get(this.apiPath+'id/?file_name='+encodeURIComponent(file.name)+'&file_size='+(this.file.size)+'&chunk_size='+(this.chunkSize))
+      .done( (data) => {
+          var response = JSON.parse(data);
           this.fileName = response['file_id'];
-          ngModel.$setViewValue(this.fileName);
-          scope.$apply();
-          for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
-            this.buildRequest(scope, Math.ceil(offset/this.chunkSize), 2);
+          if (this.fileName && !!response['operation_complete']) {
+            ngModel.$setViewValue(this.fileName);
+            scope.$apply();
+            for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
+              this.buildRequest(scope, Math.ceil(offset/this.chunkSize), 2);
+            }
           }
-        }
-        else {
+          else {
             this.setVisible(scope.fileFailed, true, ('File upload failed; could not retrieve a FileID for upload, message: ' + response['message']));
             this.fileValid = false;
+          }
         }
-      }
-    }
-
-    // TODO - Make sure that we figure out the localhost proxy issue
-    var url = this.host  + this.api_path + 'id/?file_name='+encodeURIComponent(file.name) + '&file_size='+ (this.file.size) + '&chunk_size=' + (this.chunkSize);
-//    console.log("trying to get url: " + url);
-    xhr.open('GET', url, true);
-    xhr.send('');
+      )
+      .fail( () => {
+          this.setVisible(scope.fileFailed, true, 'Could not reach Beer Garden to request a file ID.');
+          this.fileValid = false;
+        }
+      )
   }
 }
 
@@ -233,9 +219,9 @@ function fileUploadDirective($timeout) {
       }
 
       scope.removeFile = function(e) {
-        // TODO - Make sure that we figure out the localhost proxy issue
+        // $.delete not supported by jquery, use this instead.
         var http = new XMLHttpRequest();
-        var url = scope.fileUploader.host + scope.fileUploader.api_path + '?file_id='+scope.fileUploader.fileName;
+        var url = scope.fileUploader.apiPath+'?file_id='+scope.fileUploader.fileName;
         http.open('DELETE', url, true);
         http.send('');
 
