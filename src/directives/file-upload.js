@@ -54,21 +54,19 @@ class FileUploader{
     $.get(this.apiPath+'?file_id='+this.fileName+'&verify=true')
     .done(
       (data) => {
-        var response = JSON.parse(data);
-
-        if ('valid' in response) {
+        if ('valid' in data) {
           // Convert the value to a boolean
-          this.fileValid = !!response['valid'];
+          this.fileValid = !!data['valid'];
 
           if (this.fileValid) {
-            this.setVisible(scope.fileCompleted, true, response['message']);
+            this.setVisible(scope.fileCompleted, true, data['message']);
           }
           else {
-            this.setVisible(scope.fileFailed, true, response['message']);
+            this.setVisible(scope.fileFailed, true, data['message']);
           }
         }
         else {
-          this.setVisible(scope.fileFailed, true, response['message']);
+          this.setVisible(scope.fileFailed, true, data['message']);
         }
       }
     )
@@ -127,10 +125,9 @@ class FileUploader{
     $.get(this.apiPath+'id/?file_name='+encodeURIComponent(file.name)+'&file_size='+(this.file.size)+'&chunk_size='+(this.chunkSize))
     .done(
       (data) => {
-        var response = JSON.parse(data);
-        this.fileName = response['file_id'];
+        this.fileName = data['file_id'];
 
-        if (this.fileName && !!response['operation_complete']) {
+        if (this.fileName && !!data['operation_complete']) {
           ngModel.$setViewValue(this.fileName);
           scope.$apply();
 
@@ -139,7 +136,7 @@ class FileUploader{
           }
         }
         else {
-          this.setVisible(scope.fileFailed, true, ('File upload failed; could not retrieve a FileID for upload, message: ' + response['message']));
+          this.setVisible(scope.fileFailed, true, ('File upload failed; could not retrieve a FileID for upload, message: ' + data['message']));
           this.fileValid = false;
         }
       }
