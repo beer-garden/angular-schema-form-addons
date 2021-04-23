@@ -3,7 +3,7 @@ import angular from 'angular';
 fileUploadDirective.$inject = ['$timeout'];
 
 class FileUploader{
-  constructor(){
+  constructor() {
     this.file = null;
     this.numChunks = 0;
     this.failed = false;
@@ -17,6 +17,7 @@ class FileUploader{
   reset(scope) {
     // Have to do this first to avoid divide by zero (checks the numChunks field)
     this.updateProgressBar(scope, 0);
+
     // The normal reset routine
     this.file = null;
     this.numChunks = 0;
@@ -28,50 +29,56 @@ class FileUploader{
     this.setVisible(scope.fileCompleted, false, "", true);
   }
 
-  setVisible(object, visible, msg="", reset = false){
+  setVisible(object, visible, msg="", reset = false) {
     if (visible) {
       object.setAttribute('style', 'visibility: visible');
-      if ((msg != "" && msg != null) || reset)
+
+      if ((msg != "" && msg != null) || reset) {
         object.setAttribute('title', msg);
+      }
     }
     else {
       object.setAttribute('style', 'visibility: hidden');
-      if ((msg != "" && msg != null) || reset)
+
+      if ((msg != "" && msg != null) || reset) {
         object.setAttribute('Title', msg);
+      }
     }
   }
 
-  updateProgressBar(scope, number){
-    scope.fileProgressBar.setAttribute('value', Math.ceil((number / this.numChunks)*100));
+  updateProgressBar(scope, number) {
+    scope.fileProgressBar.setAttribute('value', Math.ceil((number / this.numChunks) * 100));
   }
 
-  checkFileStatus(scope){
+  checkFileStatus(scope) {
     $.get(this.apiPath+'?file_id='+this.fileName+'&verify=true')
-      .done( (data) => {
-          var response = JSON.parse(data);
-          if ('valid' in response) {
-            // Convert the value to a boolean
-            this.fileValid = !!response['valid'];
-            if (this.fileValid) {
-              this.setVisible(scope.fileCompleted, true, response['message']);
-            }
-            else {
-              this.setVisible(scope.fileFailed, true, response['message']);
-            }
+    .done(
+      (data) => {
+        if ('valid' in data) {
+          // Convert the value to a boolean
+          this.fileValid = !!data['valid'];
+
+          if (this.fileValid) {
+            this.setVisible(scope.fileCompleted, true, data['message']);
           }
           else {
-            this.setVisible(scope.fileFailed, true, response['message']);
+            this.setVisible(scope.fileFailed, true, data['message']);
           }
         }
-      )
-      .fail( () => {
-          this.setVisible(scope.fileFailed, true, "Could reach Beer Garden to verify file.");
+        else {
+          this.setVisible(scope.fileFailed, true, data['message']);
         }
-      );
+      }
+    )
+    .fail(
+      () => {
+        this.setVisible(scope.fileFailed, true, "Could reach Beer Garden to verify file.");
+      }
+    );
   }
 
 
-  buildRequest(scope, offset, retries){
+  buildRequest(scope, offset, retries) {
     var reader = new FileReader();
 
     reader.onload = (e) => {
@@ -83,56 +90,63 @@ class FileUploader{
           }
         )
       )
-        .done( () => {
-            this.chunksComplete++;
-            this.updateProgressBar(scope, this.chunksComplete);
-            if (this.chunksComplete >= this.numChunks && !this.failed){
-                this.checkFileStatus(scope);
-            }
-          }
-        )
-        .fail( () => {
-            if (retries > 0) {
-              this.buildRequest(offset, retries-1);
-            }
-            else if (!this.failed) {
-              this.failed = true;
-              this.setVisible(scope.fileFailed, true, ('File upload failed; tried to send chunk: ' + offset + ' too many times.'));
-              this.fileValid = false;
-            }
-          }
-        );
-    }
+      .done(
+        () => {
+          this.chunksComplete++;
+          this.updateProgressBar(scope, this.chunksComplete);
 
-    var chunk = this.file.slice( offset*this.chunkSize, offset*this.chunkSize + this.chunkSize );
-    reader.readAsDataURL(chunk);
-  }
-
-  uploadFile(file, ngModel, scope){
-    this.file = file;
-    this.numChunks = Math.ceil(file.size/this.chunkSize);
-    $.get(this.apiPath+'id/?file_name='+encodeURIComponent(file.name)+'&file_size='+(this.file.size)+'&chunk_size='+(this.chunkSize))
-      .done( (data) => {
-          var response = JSON.parse(data);
-          this.fileName = response['file_id'];
-          if (this.fileName && !!response['operation_complete']) {
-            ngModel.$setViewValue(this.fileName);
-            scope.$apply();
-            for( let offset = 0; offset < this.file.size; offset += this.chunkSize ){
-              this.buildRequest(scope, Math.ceil(offset/this.chunkSize), 2);
-            }
+          if (this.chunksComplete >= this.numChunks && !this.failed) {
+            this.checkFileStatus(scope);
           }
-          else {
-            this.setVisible(scope.fileFailed, true, ('File upload failed; could not retrieve a FileID for upload, message: ' + response['message']));
+        }
+      )
+      .fail(
+        () => {
+          if (retries > 0) {
+            this.buildRequest(offset, retries-1);
+          }
+          else if (!this.failed) {
+            this.failed = true;
+            this.setVisible(scope.fileFailed, true, ('File upload failed; tried to send chunk: ' + offset + ' too many times.'));
             this.fileValid = false;
           }
         }
-      )
-      .fail( () => {
-          this.setVisible(scope.fileFailed, true, 'Could not reach Beer Garden to request a file ID.');
+      );
+    }
+
+    var chunk = this.file.slice(offset*this.chunkSize, offset*this.chunkSize + this.chunkSize);
+    reader.readAsDataURL(chunk);
+  }
+
+  uploadFile(file, ngModel, scope) {
+    this.file = file;
+    this.numChunks = Math.ceil(file.size/this.chunkSize);
+
+    $.get(this.apiPath+'id/?file_name='+encodeURIComponent(file.name)+'&file_size='+(this.file.size)+'&chunk_size='+(this.chunkSize))
+    .done(
+      (data) => {
+        this.fileName = data['file_id'];
+
+        if (this.fileName && !!data['operation_complete']) {
+          ngModel.$setViewValue(this.fileName);
+          scope.$apply();
+
+          for (let offset = 0; offset < this.file.size; offset += this.chunkSize) {
+            this.buildRequest(scope, Math.ceil(offset/this.chunkSize), 2);
+          }
+        }
+        else {
+          this.setVisible(scope.fileFailed, true, ('File upload failed; could not retrieve a FileID for upload, message: ' + data['message']));
           this.fileValid = false;
         }
-      )
+      }
+    )
+    .fail(
+      () => {
+        this.setVisible(scope.fileFailed, true, 'Could not reach Beer Garden to request a file ID.');
+        this.fileValid = false;
+      }
+    )
   }
 }
 
@@ -154,7 +168,6 @@ function fileUploadDirective($timeout) {
       scope.fileProgressBar = element[0].querySelector('.file-upload-progress-bar');
       scope.fileCompleted = element[0].querySelector('.file-upload-completed');
       scope.fileFailed = element[0].querySelector('.file-upload-failed');
-
 
       scope.validateField = function(value) {
         if (value === null || value === undefined || value.trim().length === 0) {
@@ -244,9 +257,11 @@ function fileUploadDirective($timeout) {
 
 function formatFileSize(size) {
   var sizeToReturn = undefined;
+
   if (angular.isDefined(size) && size !== null) {
     var formattedSize = undefined;
     var sizeType = undefined;
+
     if (size > 1024 * 1024 * 1024) {
       formattedSize = (((size / 1024) / 1024) / 1024).toFixed(1);
       sizeType = 'GB';
