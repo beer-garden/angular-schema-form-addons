@@ -7,7 +7,7 @@ class FileUploader{
     this.file = null;
     this.numChunks = 0;
     this.failed = false;
-    this.fileName = null;
+    this.fileId = null;
     this.fileValid = false;
     this.chunksComplete = 0;
     this.chunkSize = 255 * 1024;
@@ -22,7 +22,7 @@ class FileUploader{
     this.file = null;
     this.numChunks = 0;
     this.failed = false;
-    this.fileName = null;
+    this.fileId = null;
     this.fileValid = false;
     this.chunksComplete = 0;
     this.setVisible(scope.fileFailed, false, "", true);
@@ -51,7 +51,7 @@ class FileUploader{
   }
 
   checkFileStatus(scope) {
-    $.get(this.apiPath+'?file_id='+this.fileName+'&verify=true')
+    $.get(this.apiPath+'?file_id='+this.fileId+'&verify=true')
     .done(
       (data) => {
         if ('valid' in data) {
@@ -82,7 +82,7 @@ class FileUploader{
     var reader = new FileReader();
 
     reader.onload = (e) => {
-      $.post(this.apiPath+'?file_id='+this.fileName,
+      $.post(this.apiPath+'?file_id='+this.fileId,
         JSON.stringify(
           {
             'data':  e.target.result.split(",")[1],
@@ -125,9 +125,9 @@ class FileUploader{
     $.get(this.apiPath+'id/?file_name='+encodeURIComponent(file.name)+'&file_size='+(this.file.size)+'&chunk_size='+(this.chunkSize))
     .done(
       (data) => {
-        this.fileName = data['details']['file_id'];
+        this.fileId = data['details']['file_id'];
 
-        if (this.fileName && !!data['details']['operation_complete']) {
+        if (this.fileId && !!data['details']['operation_complete']) {
           ngModel.$setViewValue(data);
           scope.$apply();
 
@@ -234,7 +234,7 @@ function fileUploadDirective($timeout) {
       scope.removeFile = function(e) {
         // $.delete not supported by jquery, use this instead.
         var http = new XMLHttpRequest();
-        var url = scope.fileUploader.apiPath+'?file_id='+scope.fileUploader.fileName;
+        var url = scope.fileUploader.apiPath+'?file_id='+scope.fileUploader.fileId;
         http.open('DELETE', url, true);
         http.send('');
 
