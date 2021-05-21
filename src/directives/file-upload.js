@@ -11,7 +11,7 @@ class FileUploader{
     this.fileValid = false;
     this.chunksComplete = 0;
     this.chunkSize = 255 * 1024;
-    this.apiPath = '/api/v1/files/';
+    this.apiPath = '/api/vbeta/chunks/';
   }
 
   reset(scope) {
@@ -125,10 +125,10 @@ class FileUploader{
     $.get(this.apiPath+'id/?file_name='+encodeURIComponent(file.name)+'&file_size='+(this.file.size)+'&chunk_size='+(this.chunkSize))
     .done(
       (data) => {
-        this.fileName = data['file_id'];
+        this.fileName = data['details']['file_id'];
 
-        if (this.fileName && !!data['operation_complete']) {
-          ngModel.$setViewValue(this.fileName);
+        if (this.fileName && !!data['details']['operation_complete']) {
+          ngModel.$setViewValue(data);
           scope.$apply();
 
           for (let offset = 0; offset < this.file.size; offset += this.chunkSize) {
@@ -136,7 +136,7 @@ class FileUploader{
           }
         }
         else {
-          this.setVisible(scope.fileFailed, true, ('File upload failed; could not retrieve a FileID for upload, message: ' + data['message']));
+          this.setVisible(scope.fileFailed, true, ('File upload failed; could not retrieve a FileID for upload, message: ' + data['details']['message']));
           this.fileValid = false;
         }
       }
