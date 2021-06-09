@@ -5,6 +5,7 @@ const merge = require('webpack-merge');
 const common = require('./webpack.config.common.js');
 
 module.exports = merge(common, {
+  mode: 'production',
 
   entry: {
     'addons': path.join(__dirname, 'src', 'addons.js'),
@@ -28,11 +29,4 @@ module.exports = merge(common, {
     'moment': 'moment',
     'moment-timezone': 'moment-timezone'
   },
-
-  plugins: [
-    new webpack.optimize.UglifyJsPlugin({
-      include: /\.min\.js$/,
-      sourceMap: true
-    })
-  ]
 });
