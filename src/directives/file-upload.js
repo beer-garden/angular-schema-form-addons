@@ -171,7 +171,7 @@ function fileUploadDirective($rootScope) {
       scope.fileFailed = element[0].querySelector('.file-upload-failed');
 
       scope.validateField = function(value) {
-        if (value === null || value === undefined || value.trim().length === 0) {
+        if (value === null || value === undefined) {
           if (scope.form.required && !scope.fileUploader.fileValid) {
             // 302 is the error code for required
             ngModel.$setValidity('tv4-302', false);
