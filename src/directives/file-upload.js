@@ -1,9 +1,7 @@
 import angular from 'angular';
 
-fileUploadDirective.$inject = ['$timeout'];
-
 class FileUploader{
-  constructor() {
+  constructor(url_prefix) {
     this.file = null;
     this.numChunks = 0;
     this.failed = false;
@@ -11,7 +9,8 @@ class FileUploader{
     this.fileValid = false;
     this.chunksComplete = 0;
     this.chunkSize = 255 * 1024;
-    this.apiPath = '/api/vbeta/chunks/';
+
+    this.apiPath = url_prefix + 'api/vbeta/chunks/';
   }
 
   reset(scope) {
@@ -150,18 +149,20 @@ class FileUploader{
   }
 }
 
-function fileUploadDirective($timeout) {
+fileUploadDirective.$inject = ['$rootScope'];
+function fileUploadDirective($rootScope) {
   return {
     restrict: 'A',
     require: 'ngModel',
     scope: true,
     priority: 500,
     link: function(scope, element, attrs, ngModel) {
+      scope.fileUploader = new FileUploader($rootScope.config.urlPrefix);
+
       scope.hasFile = false;
       scope.file = undefined;
       scope.ngModel = ngModel;
       scope.fileName = undefined;
-      scope.fileUploader = new FileUploader();
 
       // Used to trigger the click() event on the hidden file input field.
       scope.fileInput = element[0].querySelector('.file-upload-field');
