@@ -18,7 +18,6 @@
     popover-placement="right"
     popover-trigger="'mouseenter'"
   ></span>
-
   <input
     type="text"
     class="form-control {{form.fieldHtmlClass}}"
@@ -27,7 +26,7 @@
     sf-changed="form"
     schema-validate="form"
     ng-model-options="{ allowInvalid: true }"
-    uib-typeahead="item.value as item.name for item in form.titleMap | filter:{'name': $viewValue}"
+    uib-typeahead="item.value as item.name for item in getItems($viewValue)"
     typeahead-min-length="0"
     placeholder="{{form.placeholder || form.schema.placeholder || ('')}}"
   ></input>
