@@ -108,8 +108,8 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         throw typeString + ' must be the name of a ' + typeString + ' in the parent scope or an actual ' + typeString;
       }
 
-      function populateTitleMap() {
 
+      function populateTitleMap(viewValue) {
         // Invoke whatever method is specified to populate the titleMap
         var promise;
         if(form.choices.titleMap || form.choices.enum) {
@@ -127,6 +127,17 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         else if(form.choices.callback) {
           var args = [];
 
+          // Helper function to resolve argument values when creating the titleMap.
+          // This is from https://github.com/beer-garden/beer-garden/issues/439 - we need
+          // to use the viewValue in that case because the model hasn't been updated yet.
+          function getArgValue(field) {
+            if(field == form.key.join('.')) {
+              return viewValue;
+            } else {
+              return sfSelect(field, scope.model);
+            }
+          }
+
           if(form.choices.callback.arguments) {
             if(!Array.isArray(form.choices.callback.arguments)) {
               form.choices.callback.arguments = [form.choices.callback.arguments];
@@ -139,7 +150,7 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
               form.choices.callback.argumentFields = [form.choices.callback.argumentFields];
             }
             for(var i=0; i<form.choices.callback.argumentFields.length; i++) {
-              args.push( sfSelect(form.choices.callback.argumentFields[i], scope.model) );
+              args.push( getArgValue(form.choices.callback.argumentFields[i]) );
             }
           }
 
@@ -150,7 +161,7 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
           var modelParams = {};
           for(var key in form.choices.httpGet.queryParameterFields) {
             if(form.choices.httpGet.queryParameterFields.hasOwnProperty(key)) {
-              modelParams[key] = sfSelect(form.choices.httpGet.queryParameterFields[key], scope.model);
+              modelParams[key] = getArgValue(form.choices.httpGet.queryParameterFields[key]);
             }
           }
 
@@ -163,11 +174,11 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         }
 
         else {
-          promise = $q.reject({message: "No way to popluate title map for " + form.key});
+          promise = $q.reject({message: "No way to populate title map for " + form.key});
         }
 
         return promise.then(
-          function(response) { finalizeTitleMap(response); },
+          function(response) { return finalizeTitleMap(response); },
           function(response) { handleError(response); }
         );
       }
@@ -258,6 +269,8 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
         // Make sure that current model is still valid with the new choices
         ngModel.$validate();
+
+        return newTitleMap;
       }
 
       function handleError(response) {
@@ -270,9 +283,11 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
         function setupWatch(watchKey) {
           scope.$watch('model' + watchKey, function(newVal, oldVal) {
-            populateTitleMap().finally(
-              function() {scope.$emit('sf-changed-titlemap', form.key);}
-            );
+            if(newVal != oldVal) {
+              populateTitleMap(newVal).finally(
+                function() {scope.$emit('sf-changed-titlemap', form.key);}
+              );
+            }
           });
         }
 
@@ -285,9 +300,13 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         }
       }
 
-      // Otherwise go ahead and popluate the title map
+      // Otherwise go ahead and populate the title map
       else {
         populateTitleMap();
+      }
+
+      scope.getItems = function(viewValue) {
+        return populateTitleMap(viewValue);
       }
     }
   };
