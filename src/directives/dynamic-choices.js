@@ -13,6 +13,9 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
       form.titleMap = [];
       form.choices = form.choices || {};
 
+      var formKey = form.key;
+      var normalizedKey = sfPath.normalize(formKey);
+
       if(!form.validationMessage) { form.validationMessage = {}; }
       form.validationMessage['anyOf'] = 'Value is not in list of allowed values';
 
@@ -131,7 +134,7 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
           // This is from https://github.com/beer-garden/beer-garden/issues/439 - we need
           // to use the viewValue in that case because the model hasn't been updated yet.
           function getArgValue(field) {
-            if(field == form.key.join('.')) {
+            if(sfPath.normalize(field) == normalizedKey) {
               return viewValue;
             } else {
               return sfSelect(field, scope.model);
@@ -298,7 +301,11 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         }
 
         for(var i=0; i<form.choices.updateOn.length; i++) {
-          setupWatch(sfPath.normalize(form.choices.updateOn[i]));
+          // Make sure to only set a watch on OTHER fields
+          let normalizedUpdate = sfPath.normalize(form.choices.updateOn[i]);
+          if(normalizedUpdate != normalizedKey) {
+            setupWatch(normalizedUpdate);
+          }
         }
       }
 
