@@ -283,11 +283,13 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
         function setupWatch(watchKey) {
           scope.$watch('model' + watchKey, function(newVal, oldVal) {
-            if(newVal != oldVal) {
-              populateTitleMap(newVal).finally(
-                function() {scope.$emit('sf-changed-titlemap', form.key);}
-              );
-            }
+            // FYI - You might be tempted to put a if(newVal != oldVal) wrapper here.
+            // That would be a mistake. We rely on this watch to kick off the initial
+            // (on page load) populateTitleMap once all 'dependent' parameters are
+            // initialized.
+            populateTitleMap().finally(
+              function() {scope.$emit('sf-changed-titlemap', form.key);}
+            );
           });
         }
 
