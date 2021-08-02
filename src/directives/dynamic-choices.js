@@ -308,7 +308,6 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
           }
         }
       }
-
       // Otherwise go ahead and populate the title map
       else {
         populateTitleMap();
@@ -316,6 +315,14 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
       scope.getItems = function(viewValue) {
         return populateTitleMap(viewValue);
+      }
+
+      // Sigh. Ok, this is terrible.
+      let initialValue = sfSelect(normalizedKey, scope.model);
+      if(initialValue && !attrs.hasOwnProperty('bsSelect')) {
+        ngModel.$setViewValue(initialValue);
+        ngModel.$render();
+        $(element).blur();
       }
     }
   };
