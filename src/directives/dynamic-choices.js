@@ -290,7 +290,7 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
             // That would be a mistake. We rely on this watch to kick off the initial
             // (on page load) populateTitleMap once all 'dependent' parameters are
             // initialized.
-            populateTitleMap().finally(
+            populateTitleMap(ngModel.$viewValue).finally(
               function() {scope.$emit('sf-changed-titlemap', form.key);}
             );
           });
