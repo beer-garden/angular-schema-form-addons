@@ -1,3 +1,19 @@
+/* Implementation of the dynamic choices capability
+
+## Referencing other parameters
+During init the choices definition is inspected to see if there are any
+dependencies on other parameters (choices.dependsOn). If so, a watch is created
+for each of them that will fire populateTitleMap whenever the referenced
+parameter changes. The schema-form model will already be updated at this point
+so we can just grab values from it like normal.
+
+## Self-referring choices
+If the choices for an element need to use the current value of the element
+as an input parameter (self-referring), then that needs to be handled slightly
+differently. The current $viewValue (the value type into the element) is already
+passed to populateTitleMap, so we just have to use that instead.
+
+*/
 
 import angular from 'angular';
 
@@ -71,7 +87,7 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
           }
         };
 
-        // Typeaheads need to do some additional parsing and validtating for number types
+        // Typeaheads need to do some additional parsing and validating for number types
         if(form.schema.type.indexOf('integer') !== -1 || form.schema.type.indexOf('number') !== -1) {
           ngModel.$parsers.push(function(value) {
             // See the later parsing comment for why we do this here, but we have to always start as valid
@@ -317,7 +333,12 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         return populateTitleMap(viewValue);
       }
 
-      // Sigh. Ok, this is terrible.
+      /* Sigh. Ok, this is terrible. This is for the pour-it-again case where
+      a model value was set directly. This does a couple of things:
+      1. Sets the view value to kick the typeahead dropdown population
+      2. Re-renders so the view value shows up in the text box
+      3. Blurs the element to hide the dropdown
+      */
       let initialValue = sfSelect(normalizedKey, scope.model);
       if(initialValue && !attrs.hasOwnProperty('bsSelect')) {
         ngModel.$setViewValue(initialValue);
