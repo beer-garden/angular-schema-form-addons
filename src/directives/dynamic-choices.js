@@ -31,6 +31,7 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
       var formKey = form.key;
       var normalizedKey = sfPath.normalize(formKey);
+      var selfReferring = false;
 
       if(!form.validationMessage) { form.validationMessage = {}; }
       form.validationMessage['anyOf'] = 'Value is not in list of allowed values';
@@ -316,11 +317,17 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
           form.choices.updateOn = [form.choices.updateOn];
         }
 
+        // Determine which fields we need to set watches on.
+        // If one of those fields is THIS field, then we're in the self-referring case
+        // and those changes will be handled by scope.getItems.
+        // Any other fields will get a watch.
         for(var i=0; i<form.choices.updateOn.length; i++) {
           // Make sure to only set a watch on OTHER fields
           let normalizedUpdate = sfPath.normalize(form.choices.updateOn[i]);
           if(normalizedUpdate != normalizedKey) {
             setupWatch(normalizedUpdate);
+          } else {
+            selfReferring = true;
           }
         }
       }
@@ -329,16 +336,27 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         populateTitleMap();
       }
 
+      // We want to be selective about when we call populateTitleMap since it can be
+      // expensive. This function is called every time the viewValue changes (a
+      // character is typed) but only choices that are self-referring need to
+      // re-populate the map for those changes. For "normal" parameters we can just
+      // use the current titleMap.
+      //
+      // Also, even for self-referring parameters we don't want to re-populate if the
+      // viewValue hasn't actually changed, as that would be pointless.
       scope.getItems = function(viewValue) {
-        return populateTitleMap(viewValue);
+        if(selfReferring && (viewValue != ngModel.$modelValue)) {
+          return populateTitleMap(viewValue);
+        }
+
+        return form.titleMap;
       }
 
-      /* Sigh. Ok, this is terrible. This is for the pour-it-again case where
-      a model value was set directly. This does a couple of things:
-      1. Sets the view value to kick the typeahead dropdown population
-      2. Re-renders so the view value shows up in the text box
-      3. Blurs the element to hide the dropdown
-      */
+      // Sigh. Ok, this is terrible. This is for the pour-it-again case where
+      // a model value was set directly. This does a couple of things:
+      // 1. Sets the view value to kick the typeahead dropdown population
+      // 2. Re-renders so the view value shows up in the text box
+      // 3. Blurs the element to hide the dropdown
       let initialValue = sfSelect(normalizedKey, scope.model);
       if(initialValue && !attrs.hasOwnProperty('bsSelect')) {
         ngModel.$setViewValue(initialValue);
