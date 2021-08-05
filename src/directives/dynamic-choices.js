@@ -132,6 +132,9 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         // Show the spinner to indicate loading
         form.showSpinner = true;
 
+        // Clear out existing error message
+        form.fetchErrorMessage = undefined;
+
         // Invoke whatever method is specified to populate the titleMap
         var promise;
         if(form.choices.titleMap || form.choices.enum) {
@@ -314,10 +317,18 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
       }
 
       function handleError(response) {
-        form.fetchErrorMessage = response.message ? response.message : "Couldn't populate choices from " + response.url;
-
         // All done loading so hide the the spinner
         form.showSpinner = false;
+
+        if(response.message) {
+          form.fetchErrorMessage = response.message;
+         }
+         else if(response.url) {
+          form.fetchErrorMessage = "Couldn't populate choices from " + response.url;
+         }
+         else {
+           form.fetchErrorMessage = response;
+         }
       }
 
       // If this depends on other fields register a watch on each of them
