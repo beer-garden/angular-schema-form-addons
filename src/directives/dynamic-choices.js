@@ -309,7 +309,15 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
       }
 
       function handleError(response) {
-        form.fetchErrorMessage = response.message ? response.message : "Couldn't populate choices from " + response.url;
+        if(response.message) {
+          form.fetchErrorMessage = response.message;
+         }
+         else if(response.url) {
+          form.fetchErrorMessage = "Couldn't populate choices from " + response.url;
+         }
+         else {
+           form.fetchErrorMessage = response;
+         }
       }
 
       // If this depends on other fields register a watch on each of them
