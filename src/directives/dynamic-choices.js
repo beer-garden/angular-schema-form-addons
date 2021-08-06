@@ -1,3 +1,19 @@
+/* Implementation of the dynamic choices capability
+
+## Referencing other parameters
+During init the choices definition is inspected to see if there are any
+dependencies on other parameters (choices.dependsOn). If so, a watch is created
+for each of them that will fire populateTitleMap whenever the referenced
+parameter changes. The schema-form model will already be updated at this point
+so we can just grab values from it like normal.
+
+## Self-referring choices
+If the choices for an element need to use the current value of the element
+as an input parameter (self-referring), then that needs to be handled slightly
+differently. The current $viewValue (the value type into the element) is already
+passed to populateTitleMap, so we just have to use that instead.
+
+*/
 
 import angular from 'angular';
 
@@ -12,6 +28,10 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
       var form = scope.form;
       form.titleMap = [];
       form.choices = form.choices || {};
+
+      var formKey = form.key;
+      var normalizedKey = sfPath.normalize(formKey);
+      var selfReferring = false;
 
       if(!form.validationMessage) { form.validationMessage = {}; }
       form.validationMessage['anyOf'] = 'Value is not in list of allowed values';
@@ -68,7 +88,7 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
           }
         };
 
-        // Typeaheads need to do some additional parsing and validtating for number types
+        // Typeaheads need to do some additional parsing and validating for number types
         if(form.schema.type.indexOf('integer') !== -1 || form.schema.type.indexOf('number') !== -1) {
           ngModel.$parsers.push(function(value) {
             // See the later parsing comment for why we do this here, but we have to always start as valid
@@ -108,8 +128,8 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         throw typeString + ' must be the name of a ' + typeString + ' in the parent scope or an actual ' + typeString;
       }
 
-      function populateTitleMap() {
 
+      function populateTitleMap(viewValue) {
         // Invoke whatever method is specified to populate the titleMap
         var promise;
         if(form.choices.titleMap || form.choices.enum) {
@@ -127,6 +147,17 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         else if(form.choices.callback) {
           var args = [];
 
+          // Helper function to resolve argument values when creating the titleMap.
+          // This is from https://github.com/beer-garden/beer-garden/issues/439 - we need
+          // to use the viewValue in that case because the model hasn't been updated yet.
+          function getArgValue(field) {
+            if(sfPath.normalize(field) == normalizedKey) {
+              return viewValue;
+            } else {
+              return sfSelect(field, scope.model);
+            }
+          }
+
           if(form.choices.callback.arguments) {
             if(!Array.isArray(form.choices.callback.arguments)) {
               form.choices.callback.arguments = [form.choices.callback.arguments];
@@ -139,7 +170,7 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
               form.choices.callback.argumentFields = [form.choices.callback.argumentFields];
             }
             for(var i=0; i<form.choices.callback.argumentFields.length; i++) {
-              args.push( sfSelect(form.choices.callback.argumentFields[i], scope.model) );
+              args.push( getArgValue(form.choices.callback.argumentFields[i]) );
             }
           }
 
@@ -165,7 +196,7 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
           var modelParams = {};
           for(var key in form.choices.httpGet.queryParameterFields) {
             if(form.choices.httpGet.queryParameterFields.hasOwnProperty(key)) {
-              modelParams[key] = sfSelect(form.choices.httpGet.queryParameterFields[key], scope.model);
+              modelParams[key] = getArgValue(form.choices.httpGet.queryParameterFields[key]);
             }
           }
 
@@ -178,11 +209,11 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
         }
 
         else {
-          promise = $q.reject({message: "No way to popluate title map for " + form.key});
+          promise = $q.reject({message: "No way to populate title map for " + form.key});
         }
 
         return promise.then(
-          function(response) { finalizeTitleMap(response); },
+          function(response) { return finalizeTitleMap(response); },
           function(response) { handleError(response); }
         );
       }
@@ -273,6 +304,8 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
         // Make sure that current model is still valid with the new choices
         ngModel.$validate();
+
+        return newTitleMap;
       }
 
       function handleError(response) {
@@ -285,7 +318,11 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
         function setupWatch(watchKey) {
           scope.$watch('model' + watchKey, function(newVal, oldVal) {
-            populateTitleMap().finally(
+            // FYI - You might be tempted to put a if(newVal != oldVal) wrapper here.
+            // That would be a mistake. We rely on this watch to kick off the initial
+            // (on page load) populateTitleMap once all 'dependent' parameters are
+            // initialized.
+            populateTitleMap(ngModel.$viewValue).finally(
               function() {scope.$emit('sf-changed-titlemap', form.key);}
             );
           });
@@ -295,14 +332,51 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
           form.choices.updateOn = [form.choices.updateOn];
         }
 
+        // Determine which fields we need to set watches on.
+        // If one of those fields is THIS field, then we're in the self-referring case
+        // and those changes will be handled by scope.getItems.
+        // Any other fields will get a watch.
         for(var i=0; i<form.choices.updateOn.length; i++) {
-          setupWatch(sfPath.normalize(form.choices.updateOn[i]));
+          // Make sure to only set a watch on OTHER fields
+          let normalizedUpdate = sfPath.normalize(form.choices.updateOn[i]);
+          if(normalizedUpdate != normalizedKey) {
+            setupWatch(normalizedUpdate);
+          } else {
+            selfReferring = true;
+          }
         }
       }
-
-      // Otherwise go ahead and popluate the title map
+      // Otherwise go ahead and populate the title map
       else {
         populateTitleMap();
+      }
+
+      // We want to be selective about when we call populateTitleMap since it can be
+      // expensive. This function is called every time the viewValue changes (a
+      // character is typed) but only choices that are self-referring need to
+      // re-populate the map for those changes. For "normal" parameters we can just
+      // use the current titleMap.
+      //
+      // Also, even for self-referring parameters we don't want to re-populate if the
+      // viewValue hasn't actually changed, as that would be pointless.
+      scope.getItems = function(viewValue) {
+        if(selfReferring && (viewValue != ngModel.$modelValue)) {
+          return populateTitleMap(viewValue);
+        }
+
+        return form.titleMap;
+      }
+
+      // Sigh. Ok, this is terrible. This is for the pour-it-again case where
+      // a model value was set directly. This does a couple of things:
+      // 1. Sets the view value to kick the typeahead dropdown population
+      // 2. Re-renders so the view value shows up in the text box
+      // 3. Blurs the element to hide the dropdown
+      let initialValue = sfSelect(normalizedKey, scope.model);
+      if(initialValue && !attrs.hasOwnProperty('bsSelect')) {
+        ngModel.$setViewValue(initialValue);
+        ngModel.$render();
+        $(element).blur();
       }
     }
   };
