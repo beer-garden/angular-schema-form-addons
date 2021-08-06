@@ -143,7 +143,22 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
             }
           }
 
-          promise = $q.when( resolve(form.choices.callback.function, 'function').apply(null, args) );
+          // The callback function is going to be createRequestWrapper in the command
+          // view controller. This is what lets us reach back up into the app to create
+          // a request.
+          promise = $q.when(resolve(form.choices.callback.function, 'function').apply(null, args)).then(
+            (response) => {
+              // The BG request service resolves successfully regardless of the Request
+              // completion status, so we need to deal with non-success statuses here.
+              let parsed = JSON.parse(response.output);
+
+              if(response.status == "SUCCESS") {
+                return parsed;
+              } else {
+                throw parsed;
+              }
+            }
+          );
         }
 
         else if(form.choices.httpGet) {
