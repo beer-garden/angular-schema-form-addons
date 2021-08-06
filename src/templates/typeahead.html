@@ -25,7 +25,7 @@
     sf-field-model
     sf-changed="form"
     schema-validate="form"
-    ng-model-options="{ allowInvalid: true }"
+    ng-model-options="{ allowInvalid: true, debounce: 500 }"
     uib-typeahead="item.value as item.name for item in getItems($viewValue)"
     typeahead-min-length="0"
     placeholder="{{form.placeholder || form.schema.placeholder || ('')}}"
