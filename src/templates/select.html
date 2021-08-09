@@ -27,7 +27,7 @@
       sf-field-model
       sf-changed="form"
       schema-validate="form"
-      ng-model-options="{ allowInvalid: true }"
+      ng-model-options="{ allowInvalid: true, debounce: 500 }"
       ng-disabled="form.disabled"
       data-placeholder="{{form.placeholder || form.schema.placeholder || ('Select One')}}"
       data-placement="{{form.options.placement || 'bottom-left'}}"
