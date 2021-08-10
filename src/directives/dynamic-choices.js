@@ -15,8 +15,6 @@ passed to populateTitleMap, so we just have to use that instead.
 
 */
 
-import angular from 'angular';
-
 dynamicChoicesDirective.$inject = ['$http', '$q', 'filterFilter', 'sfPath', 'sfSelect'];
 export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelect) {
   return {
@@ -28,6 +26,7 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
       var form = scope.form;
       form.titleMap = [];
       form.choices = form.choices || {};
+      form.showSpinner = false;
 
       var formKey = form.key;
       var normalizedKey = sfPath.normalize(formKey);
@@ -130,6 +129,9 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
 
       function populateTitleMap(viewValue) {
+        // Show the spinner to indicate loading
+        form.showSpinner = true;
+
         // Invoke whatever method is specified to populate the titleMap
         var promise;
         if(form.choices.titleMap || form.choices.enum) {
@@ -302,6 +304,9 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
         form.titleMap = newTitleMap;
 
+        // All done loading so hide the the spinner
+        form.showSpinner = false;
+
         // Make sure that current model is still valid with the new choices
         ngModel.$validate();
 
@@ -310,6 +315,9 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
       function handleError(response) {
         form.fetchErrorMessage = response.message ? response.message : "Couldn't populate choices from " + response.url;
+
+        // All done loading so hide the the spinner
+        form.showSpinner = false;
       }
 
       // If this depends on other fields register a watch on each of them

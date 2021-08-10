@@ -18,6 +18,16 @@
     popover-placement="right"
     popover-trigger="'mouseenter'"
   ></span>
+
+  <span
+    class="fa fa-spinner fa-pulse animate-fix"
+    ng-if="form.showSpinner"
+    uib-popover="Loading choices"
+    popover-animation="true"
+    popover-placement="right"
+    popover-trigger="'mouseenter'"
+  ></span>
+
   <input
     type="text"
     class="form-control {{form.fieldHtmlClass}}"
