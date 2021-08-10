@@ -11,7 +11,7 @@
   <span
     class="glyphicon glyphicon-info-sign"
     style="cursor: default;"
-    ng-show="form.fetchErrorMessage"
+    ng-if="form.fetchErrorMessage"
     uib-popover="{{form.fetchErrorMessage}}"
     popover-title="Error Populating Choices"
     popover-animation="true"
