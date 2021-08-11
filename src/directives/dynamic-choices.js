@@ -130,6 +130,9 @@ export function dynamicChoicesDirective($http, $q, filterFilter, sfPath, sfSelec
 
 
       function populateTitleMap(viewValue) {
+        // Clear out existing error message
+        form.fetchErrorMessage = undefined;
+
         // Invoke whatever method is specified to populate the titleMap
         var promise;
         if(form.choices.titleMap || form.choices.enum) {
