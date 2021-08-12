@@ -27,59 +27,50 @@ The following steps are the easiest way to get up and running from source.
 
 ### Prerequisites:
 * Node.js (Stable, 6+)
-* `yarn` installed globally
 
-### Get Up and Running
+### Clone and Install
 ```bash
 # Clone the repository
 git clone https://github.com/beer-garden/angular-schema-form-addons.git
 cd angular-schema-form-addons
 
-# Install node dependencies
-yarn install
-
-# Run the demo application
-yarn serve
+# Install dependencies
+npm install
 ```
 
-This will start a webpack development server on port 8081. Webpack will watch the `src` directory for changes, and when triggered it will rebuild and cause any browsers viewing the demo application to reload.
+### Demo Application
 
-Webpack only binds to localhost so view the demo at http://localhost:8080/.
+```
+npm run serve
+```
+
+This will start a webpack development server on port 8078. Webpack will watch the `src` directory for changes, and when triggered it will rebuild and cause any browsers viewing the demo application to reload.
+
+Webpack only binds to localhost so view the demo at http://localhost:8078/.
 
 ### Building
 Build the production artifacts:
 ```bash
-yarn build
+npm run build
 ```
 
 This puts the generated files in the `dist` directory.
 
-### Testing
-Run the tests:
-```bash
-yarn test
-```
+### Linking / Watching
+You can use `npm link` to quickly incorporate changes into an external application that is using ASF Addons:
 
-### Extra Credit
-You can use `yarn link` to quickly incorporate changes into an external application that is using ASF Addons:
 ```bash
 # Mark this application as linkable
-yarn link
+npm link
 
 # Watch the 'src' directory, rebuilding the dist artifacts on changes
-yarn watch
+npm run watch
 
 # IN ANOTHER SHELL
 
 # Navigate to the external application and use the package link
 cd 'path/to/my/other/project'
-yarn link @beer-garden/addons
-
-# At this point 'path/to/my/other/project/node_modules/@beer-garden/addons'
-# should be a symbolic link to this directory
-
-# Run the external project's webpack development server
-yarn serve
+npm link @beer-garden/addons
 ```
 
-Now changes made to this project will trigger a rebuild, and the new dist artifacts will trigger a rebuild / reload in the external project.
+At this point 'path/to/my/other/project/node_modules/@beer-garden/addons' will be a symbolic link referencing the build output of the ASF addons.
