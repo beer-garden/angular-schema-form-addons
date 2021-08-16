@@ -10,9 +10,18 @@
   <span
     class="glyphicon glyphicon-info-sign"
     style="cursor: default;"
-    ng-show="form.fetchErrorMessage"
+    ng-if="form.fetchErrorMessage"
     uib-popover="{{form.fetchErrorMessage}}"
     popover-title="Error Populating Choices"
+    popover-animation="true"
+    popover-placement="right"
+    popover-trigger="'mouseenter'"
+  ></span>
+
+  <span
+    class="fa fa-spinner fa-pulse animate-fix"
+    ng-if="form.showSpinner"
+    uib-popover="Loading choices"
     popover-animation="true"
     popover-placement="right"
     popover-trigger="'mouseenter'"
