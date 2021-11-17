@@ -1,0 +1,26 @@
+<div
+ class="form-group has-feedback {{form.htmlClass}}"
+ ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess()}"
+ file-upload-bytes="form"
+ sf-field-model
+ sf-changed="form"
+ ng-model-options="form.ngModelOptions"
+ >
+
+  <label
+    class="{{form.labelHtmlClass}}"
+    ng-class="{'sr-only': !showTitle()}"
+  >{{form.title}}</label>
+
+ <input class="file-upload-field" ng-hide="true" type="file" id="{{key}}" onchange="angular.element(this).scope().selectedFile()" />
+ <div class="input-group btn btn-default col-xs-12 form-control" ng-click="fileInput.click()">
+  <span class="pull-left">{{fileName || inputText}}</span>
+  <i class="glyphicon glyphicon-upload pull-right"></i>
+
+
+ </div>
+  <div
+    class="help-block"
+    sf-message="form.description">
+  </div>
+</div>
