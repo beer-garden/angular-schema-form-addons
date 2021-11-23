@@ -1,49 +1,75 @@
 <div
- class="form-group has-feedback {{form.htmlClass}}"
- ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess()}"
- file-upload="form"
- sf-field-model
- sf-changed="form"
- ng-model-options="form.ngModelOptions"
- >
-
+  class="form-group has-feedback {{form.htmlClass}}"
+  ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess()}"
+  file-upload="form"
+  sf-field-model
+  sf-changed="form"
+  ng-model-options="form.ngModelOptions"
+>
   <label
     class="{{form.labelHtmlClass}}"
     ng-class="{'sr-only': !showTitle()}"
     for="{{form.key.slice(-1)[0]}}"
-  >{{form.title}}</label>
+    >{{form.title}}</label
+  >
 
   <input
     id="{{form.key.slice(-1)[0]}}"
     name="{{form.key.slice(-1)[0]}}"
     class="form-control {{form.fieldHtmlClass}} file-upload-field"
     type="file"
-    style="visibility: hidden; position: absolute;" />
+    style="visibility: hidden; position: absolute"
+  />
 
   <div class="input-group col-xs-12">
-    <span class="input-group-addon" ng-click="fileInput.click()"><i class="glyphicon glyphicon-upload"></i></span>
-    <input type="text" class="form-control input-lg" disabled placeholder="{{fileName || form.placeholder || 'Upload File'}}" />
+    <span class="input-group-addon" ng-click="fileInput.click()"
+      ><i class="glyphicon glyphicon-upload"></i
+    ></span>
+    <input
+      type="text"
+      class="form-control input-lg"
+      disabled
+      placeholder="{{fileName || form.placeholder || 'Upload File'}}"
+    />
     <span class="input-group-btn">
-      <button class="btn btn-info input-lg" ng-show="hasFile" type="button" ng-click="removeFile($event)">
-        <i class="glyphicon glyphicon-remove"></i> Remove</button>
-      <button class="btn btn-primary input-lg" ng-show="!hasFile" ng-disabled="form.readonly" type="button" ng-click="fileInput.click()">
-        <i class="glyphicon glyphicon-search"></i> Browse</button>
+      <button
+        class="btn btn-info input-lg"
+        ng-show="hasFile"
+        type="button"
+        ng-click="removeFile($event)"
+      >
+        <i class="glyphicon glyphicon-remove"></i> Remove
+      </button>
+      <button
+        class="btn btn-primary input-lg"
+        ng-show="!hasFile"
+        ng-disabled="form.readonly"
+        type="button"
+        ng-click="fileInput.click()"
+      >
+        <i class="glyphicon glyphicon-search"></i> Browse
+      </button>
     </span>
   </div>
 
   <div>
-      <progress
-        id="{{form.key.slice(-1)[0]}}_progress_bar"
-        value="0"
-        max="100"
-        class="file-upload-progress-bar"
-      ></progress>
-      <i class="glyphicon glyphicon-check file-upload-completed" style="visibility: hidden">Complete</i>
-      <i class="glyphicon glyphicon-remove file-upload-failed" style="visibility: hidden">Failed</i>
+    <progress
+      id="{{form.key.slice(-1)[0]}}_progress_bar"
+      value="0"
+      max="100"
+      class="file-upload-progress-bar"
+    ></progress>
+    <i
+      class="glyphicon glyphicon-check file-upload-completed"
+      style="visibility: hidden"
+      >Complete</i
+    >
+    <i
+      class="glyphicon glyphicon-remove file-upload-failed"
+      style="visibility: hidden"
+      >Failed</i
+    >
   </div>
 
-  <div
-    class="help-block"
-    sf-message="form.description">
-  </div>
+  <div class="help-block" sf-message="form.description"></div>
 </div>

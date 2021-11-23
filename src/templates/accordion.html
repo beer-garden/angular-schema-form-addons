@@ -1,8 +1,14 @@
 <div>
-  <uib-accordion ng-disabled="form.readonly" class="schema-form-fieldset {{form.htmlClass}}">
+  <uib-accordion
+    ng-disabled="form.readonly"
+    class="schema-form-fieldset {{form.htmlClass}}"
+  >
     <div uib-accordion-group class="panel panel-default">
       <uib-accordion-heading>
-        <span class="glyphicon glyphicon-plus-sign" style="margin-right:8px;"></span>
+        <span
+          class="glyphicon glyphicon-plus-sign"
+          style="margin-right: 8px"
+        ></span>
         <span>{{form.title}}</span>
       </uib-accordion-heading>
       <div sf-field-transclude></div>
