@@ -23,6 +23,7 @@ import regularObject from './aspects/regular-object.js';
 import partitionedObject from './aspects/partitioned-object';
 import hiddenFields from './aspects/hidden-fields';
 import fileUpload from './aspects/file-upload';
+import fileUploadBytes from './aspects/file-upload-bytes';
 import dynamicChoices from './aspects/dynamic-choices';
 import complex from './aspects/complex';
 import date from './aspects/date';
@@ -103,6 +104,7 @@ function($scope, $http, $cookies) {
     'Partitioned Object': partitionedObject,
     'Hidden Fields': hiddenFields,
     'File Upload': fileUpload,
+    'File Upload Bytes': fileUploadBytes,
     'Dynamic Choices': dynamicChoices,
     'Complex': complex,
     'Date': date

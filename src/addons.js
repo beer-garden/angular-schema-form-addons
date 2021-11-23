@@ -8,6 +8,7 @@ import 'eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css
 
 import { dynamicChoicesDirective } from './directives/dynamic-choices.js';
 import { fileUploadDirective, formatFileSize } from './directives/file-upload';
+import { fileUploadBytesDirective } from './directives/file-upload-bytes';
 import { rawDirective } from './directives/raw.js';
 import { dictionaryDirective } from './directives/dictionary.js';
 import { nullableObjectDirective, nullableObjectPostProcessor } from './directives/nullable-object.js';
@@ -17,6 +18,7 @@ import { dateTimeDirective } from './directives/datetime.js';
 import arrayTemplate from './templates/array.html';
 import accordionTemplate from './templates/accordion.html';
 import fileUploadTemplate from './templates/file-upload.html';
+import fileUploadBytesTemplate from './templates/file-upload-bytes.html';
 import typeaheadTemplate from './templates/typeahead.html';
 import selectTemplate from './templates/select.html';
 import rawTemplate from './templates/raw.html';
@@ -35,6 +37,7 @@ angular.module('beer-garden.addons', ['schemaForm'])
   .directive('raw', rawDirective)
   .directive('dictionary', dictionaryDirective)
   .directive('nullableObject', nullableObjectDirective)
+  .directive('fileUploadBytes', fileUploadBytesDirective)
   .directive('fileUpload', fileUploadDirective)
   .directive('dateTime', dateTimeDirective)
   .run(nullableObjectPostProcessor);
@@ -57,6 +60,9 @@ function addonsConfig(schemaFormProvider, schemaFormDecoratorsProvider, sfBuilde
 
   schemaFormDecoratorsProvider.defineAddOn('bootstrapDecorator',
     'base64file', fileUploadTemplate, stdBuilders);
+
+  schemaFormDecoratorsProvider.defineAddOn('bootstrapDecorator',
+      'bytesFile', fileUploadBytesTemplate, stdBuilders);
 
   schemaFormDecoratorsProvider.defineAddOn('bootstrapDecorator',
     'accordion', accordionTemplate, [sfField, transclusion, condition]);
@@ -103,6 +109,17 @@ function addonsConfig(schemaFormProvider, schemaFormDecoratorsProvider, sfBuilde
     }
   }
   schemaFormProvider.prependRule('file', base64fileRule);
+
+  var bytesFileRule = function(name, schema, options) {
+    if (verifyType('file', schema.type) && schema.format === 'bytes') {
+      var f = schemaFormProvider.stdFormObj(name, schema, options);
+      f.key = options.path;
+      f.type = 'bytesFile';
+      options.lookup[sfPathProvider.stringify(options.path)] = f;
+      return f;
+    }
+  }
+  schemaFormProvider.prependRule('file', bytesFileRule);
 
   var variantRule = function(name, schema, options) {
     if (verifyType('variant', schema.type)) {
