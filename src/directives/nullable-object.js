@@ -1,15 +1,13 @@
+import angular from "angular";
 
-import angular from 'angular';
-
-nullableObjectDirective.$inject = ['schemaForm', 'sfSelect', 'sfPath'];
+nullableObjectDirective.$inject = ["schemaForm", "sfSelect", "sfPath"];
 export function nullableObjectDirective(schemaForm, sfSelect, sfPath) {
   return {
-    restrict: 'A',
+    restrict: "A",
     scope: false,
     priority: 500,
-    link: function(scope, element, attrs) {
-
-      scope.createObject = function($event, formObj) {
+    link: function (scope, element, attrs) {
+      scope.createObject = function ($event, formObj) {
         /*
         OK, quick explainer:
         We've already created the form elements and hidden them behind an
@@ -35,70 +33,75 @@ export function nullableObjectDirective(schemaForm, sfSelect, sfPath) {
         delete formObj.schema.tempProperties;
 
         delete formObj.schema.format;
-        if(formObj.schema.partition) {
-          formObj.type = 'partitioned-object';
+        if (formObj.schema.partition) {
+          formObj.type = "partitioned-object";
           formObj.partition = formObj.schema.partition;
           formObj.accordionHeading = formObj.schema.accordionHeading;
         }
 
         // Reset array values
         var needRedraw = false;
-        schemaForm.traverseForm(formObj, function(nestedFormObj) {
-          if(nestedFormObj.type === 'array') {
+        schemaForm.traverseForm(formObj, function (nestedFormObj) {
+          if (nestedFormObj.type === "array") {
             needRedraw = true;
             nestedFormObj.startEmpty = nestedFormObj.tempStartEmpty;
             delete nestedFormObj.tempStartEmpty;
           }
-          if(!needRedraw && formObj.schema.partition && nestedFormObj.schema.optional) {
+          if (
+            !needRedraw &&
+            formObj.schema.partition &&
+            nestedFormObj.schema.optional
+          ) {
             needRedraw = true;
           }
         });
 
         // If we don't need to redraw we can just set the model to the defaults
-        if(!needRedraw){
+        if (!needRedraw) {
           if (!scope.options || scope.options.setSchemaDefaults !== false) {
-            schemaForm.traverseSchema(formObj.schema, function(prop, path) {
-              if (angular.isDefined(prop['default'])) {
+            schemaForm.traverseSchema(formObj.schema, function (prop, path) {
+              if (angular.isDefined(prop["default"])) {
                 var fullPath = sfPath.normalize(formObj.key.concat(path));
                 var val = sfSelect(fullPath, scope.model);
                 if (angular.isUndefined(val)) {
-                  sfSelect(fullPath, scope.model, prop['default']);
+                  sfSelect(fullPath, scope.model, prop["default"]);
                 }
               }
             });
           }
           formObj.created = true;
-          scope.$emit('sf-changed');
-        }
-        else {
+          scope.$emit("sf-changed");
+        } else {
           formObj.created = true;
-          scope.$emit('schemaFormRedraw');
+          scope.$emit("schemaFormRedraw");
         }
       };
-    }
+    },
   };
 }
 
-nullableObjectPostProcessor.$inject = ['postProcess', 'schemaForm'];
+nullableObjectPostProcessor.$inject = ["postProcess", "schemaForm"];
 export function nullableObjectPostProcessor(postProcess, schemaForm) {
-
-  var nullablePostProcess = function(canonicalForm) {
+  var nullablePostProcess = function (canonicalForm) {
     // The canonicalForm is passed as an array, so we need to iterate over
     // each item and traverse down the children
-    for(var i=0; i<canonicalForm.length; i++) {
-      schemaForm.traverseForm(canonicalForm[i], function(formObj) {
-
+    for (var i = 0; i < canonicalForm.length; i++) {
+      schemaForm.traverseForm(canonicalForm[i], function (formObj) {
         // If a nullable-object hasn't been created save off the properties
-        if(formObj.type === 'nullable-object' && !formObj.created &&
-            !angular.equals({}, formObj.schema.properties)) {
-
-          formObj.schema.tempProperties = angular.copy(formObj.schema.properties);
+        if (
+          formObj.type === "nullable-object" &&
+          !formObj.created &&
+          !angular.equals({}, formObj.schema.properties)
+        ) {
+          formObj.schema.tempProperties = angular.copy(
+            formObj.schema.properties
+          );
           formObj.schema.properties = {};
 
           // If the nullable-object has array children, they need to start
           // empty so the model doesn't get populated
-          schemaForm.traverseForm(formObj, function(nestedFormObj) {
-            if(nestedFormObj.type === 'array') {
+          schemaForm.traverseForm(formObj, function (nestedFormObj) {
+            if (nestedFormObj.type === "array") {
               nestedFormObj.tempStartEmpty = nestedFormObj.startEmpty;
               nestedFormObj.startEmpty = true;
             }

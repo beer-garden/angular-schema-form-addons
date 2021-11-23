@@ -1,6 +1,6 @@
-import angular from 'angular';
+import angular from "angular";
 
-class FileUploader{
+class FileUploader {
   constructor(url_prefix) {
     this.file = null;
     this.numChunks = 0;
@@ -10,7 +10,7 @@ class FileUploader{
     this.chunksComplete = 0;
     this.chunkSize = 255 * 1024;
 
-    this.apiPath = url_prefix + 'api/vbeta/chunks/';
+    this.apiPath = url_prefix + "api/vbeta/chunks/";
   }
 
   reset(scope) {
@@ -28,135 +28,153 @@ class FileUploader{
     this.setVisible(scope.fileCompleted, false, "", true);
   }
 
-  setVisible(object, visible, msg="", reset = false) {
+  setVisible(object, visible, msg = "", reset = false) {
     if (visible) {
-      object.setAttribute('style', 'visibility: visible');
+      object.setAttribute("style", "visibility: visible");
 
       if ((msg != "" && msg != null) || reset) {
-        object.setAttribute('title', msg);
+        object.setAttribute("title", msg);
       }
-    }
-    else {
-      object.setAttribute('style', 'visibility: hidden');
+    } else {
+      object.setAttribute("style", "visibility: hidden");
 
       if ((msg != "" && msg != null) || reset) {
-        object.setAttribute('Title', msg);
+        object.setAttribute("Title", msg);
       }
     }
   }
 
   updateProgressBar(scope, number) {
-    scope.fileProgressBar.setAttribute('value', Math.ceil((number / this.numChunks) * 100));
-  }
-
-  checkFileStatus(scope) {
-    $.get(this.apiPath+'?file_id='+this.fileId+'&verify=true')
-    .done(
-      (data) => {
-        if ('valid' in data) {
-          // Convert the value to a boolean
-          this.fileValid = !!data['valid'];
-
-          if (this.fileValid) {
-            this.setVisible(scope.fileCompleted, true, data['message']);
-          }
-          else {
-            this.setVisible(scope.fileFailed, true, data['message']);
-          }
-        }
-        else {
-          this.setVisible(scope.fileFailed, true, data['message']);
-        }
-      }
-    )
-    .fail(
-      () => {
-        this.setVisible(scope.fileFailed, true, "Could reach Beer Garden to verify file.");
-      }
+    scope.fileProgressBar.setAttribute(
+      "value",
+      Math.ceil((number / this.numChunks) * 100)
     );
   }
 
+  checkFileStatus(scope) {
+    $.get(this.apiPath + "?file_id=" + this.fileId + "&verify=true")
+      .done((data) => {
+        if ("valid" in data) {
+          // Convert the value to a boolean
+          this.fileValid = !!data["valid"];
+
+          if (this.fileValid) {
+            this.setVisible(scope.fileCompleted, true, data["message"]);
+          } else {
+            this.setVisible(scope.fileFailed, true, data["message"]);
+          }
+        } else {
+          this.setVisible(scope.fileFailed, true, data["message"]);
+        }
+      })
+      .fail(() => {
+        this.setVisible(
+          scope.fileFailed,
+          true,
+          "Could reach Beer Garden to verify file."
+        );
+      });
+  }
 
   buildRequest(scope, offset, retries) {
     var reader = new FileReader();
 
     reader.onload = (e) => {
-      $.post(this.apiPath+'?file_id='+this.fileId,
-        JSON.stringify(
-          {
-            'data':  e.target.result.split(",")[1],
-            'offset': offset,
-          }
-        )
+      $.post(
+        this.apiPath + "?file_id=" + this.fileId,
+        JSON.stringify({
+          data: e.target.result.split(",")[1],
+          offset: offset,
+        })
       )
-      .done(
-        () => {
+        .done(() => {
           this.chunksComplete++;
           this.updateProgressBar(scope, this.chunksComplete);
 
           if (this.chunksComplete >= this.numChunks && !this.failed) {
             this.checkFileStatus(scope);
           }
-        }
-      )
-      .fail(
-        () => {
+        })
+        .fail(() => {
           if (retries > 0) {
-            this.buildRequest(offset, retries-1);
-          }
-          else if (!this.failed) {
+            this.buildRequest(offset, retries - 1);
+          } else if (!this.failed) {
             this.failed = true;
-            this.setVisible(scope.fileFailed, true, ('File upload failed; tried to send chunk: ' + offset + ' too many times.'));
+            this.setVisible(
+              scope.fileFailed,
+              true,
+              "File upload failed; tried to send chunk: " +
+                offset +
+                " too many times."
+            );
             this.fileValid = false;
           }
-        }
-      );
-    }
+        });
+    };
 
-    var chunk = this.file.slice(offset*this.chunkSize, offset*this.chunkSize + this.chunkSize);
+    var chunk = this.file.slice(
+      offset * this.chunkSize,
+      offset * this.chunkSize + this.chunkSize
+    );
     reader.readAsDataURL(chunk);
   }
 
   uploadFile(file, ngModel, scope) {
     this.file = file;
-    this.numChunks = Math.ceil(file.size/this.chunkSize);
+    this.numChunks = Math.ceil(file.size / this.chunkSize);
 
-    $.get(this.apiPath+'id/?file_name='+encodeURIComponent(file.name)+'&file_size='+(this.file.size)+'&chunk_size='+(this.chunkSize))
-    .done(
-      (data) => {
-        this.fileId = data['details']['file_id'];
+    $.get(
+      this.apiPath +
+        "id/?file_name=" +
+        encodeURIComponent(file.name) +
+        "&file_size=" +
+        this.file.size +
+        "&chunk_size=" +
+        this.chunkSize
+    )
+      .done((data) => {
+        this.fileId = data["details"]["file_id"];
 
-        if (this.fileId && !!data['details']['operation_complete']) {
+        if (this.fileId && !!data["details"]["operation_complete"]) {
           ngModel.$setViewValue(data);
           scope.$apply();
 
-          for (let offset = 0; offset < this.file.size; offset += this.chunkSize) {
-            this.buildRequest(scope, Math.ceil(offset/this.chunkSize), 2);
+          for (
+            let offset = 0;
+            offset < this.file.size;
+            offset += this.chunkSize
+          ) {
+            this.buildRequest(scope, Math.ceil(offset / this.chunkSize), 2);
           }
-        }
-        else {
-          this.setVisible(scope.fileFailed, true, ('File upload failed; could not retrieve a FileID for upload, message: ' + data['details']['message']));
+        } else {
+          this.setVisible(
+            scope.fileFailed,
+            true,
+            "File upload failed; could not retrieve a FileID for upload, message: " +
+              data["details"]["message"]
+          );
           this.fileValid = false;
         }
-      }
-    )
-    .fail(
-      () => {
-        this.setVisible(scope.fileFailed, true, 'Could not reach Beer Garden to request a file ID.');
+      })
+      .fail(() => {
+        this.setVisible(
+          scope.fileFailed,
+          true,
+          "Could not reach Beer Garden to request a file ID."
+        );
         this.fileValid = false;
-      }
-    )
+      });
   }
 }
 
-fileUploadDirective.$inject = ['$rootScope'];
+fileUploadDirective.$inject = ["$rootScope"];
 function fileUploadDirective($rootScope) {
   return {
-    restrict: 'A',
-    require: 'ngModel',
+    restrict: "A",
+    require: "ngModel",
     scope: true,
     priority: 500,
-    link: function(scope, element, attrs, ngModel) {
+    link: function (scope, element, attrs, ngModel) {
       scope.fileUploader = new FileUploader($rootScope.config.urlPrefix);
 
       scope.hasFile = false;
@@ -165,79 +183,82 @@ function fileUploadDirective($rootScope) {
       scope.fileName = undefined;
 
       // Used to trigger the click() event on the hidden file input field.
-      scope.fileInput = element[0].querySelector('.file-upload-field');
-      scope.fileProgressBar = element[0].querySelector('.file-upload-progress-bar');
-      scope.fileCompleted = element[0].querySelector('.file-upload-completed');
-      scope.fileFailed = element[0].querySelector('.file-upload-failed');
+      scope.fileInput = element[0].querySelector(".file-upload-field");
+      scope.fileProgressBar = element[0].querySelector(
+        ".file-upload-progress-bar"
+      );
+      scope.fileCompleted = element[0].querySelector(".file-upload-completed");
+      scope.fileFailed = element[0].querySelector(".file-upload-failed");
 
-      scope.validateField = function(value) {
+      scope.validateField = function (value) {
         if (value === null || value === undefined) {
           if (scope.form.required && !scope.fileUploader.fileValid) {
             // 302 is the error code for required
-            ngModel.$setValidity('tv4-302', false);
+            ngModel.$setValidity("tv4-302", false);
           }
         }
-      }
+      };
 
       // Since we are not using the sf-validate directive, we need
       // to manually listen for the validate event and call our validation
       // function. This basically just applies the required validator.
-      scope.$on('schemaFormValidate', function() {
+      scope.$on("schemaFormValidate", function () {
         scope.validateField(ngModel.$viewValue);
       });
 
-      var validateFile = function(file) {
+      var validateFile = function (file) {
         var valid = true;
         var schema = scope.$eval(attrs.fileUpload).schema;
 
         if (file.size > parseInt(schema.maxSize, 10)) {
           valid = false;
-          ngModel.$setValidity('maxFileUploadSize', false);
+          ngModel.$setValidity("maxFileUploadSize", false);
         } else {
-          ngModel.$setValidity('maxFileUploadSize', true);
+          ngModel.$setValidity("maxFileUploadSize", true);
         }
 
         if (file.size < parseInt(schema.minSize, 10)) {
           valid = false;
-          ngModel.$setValidity('minFileUploadSize', false);
+          ngModel.$setValidity("minFileUploadSize", false);
         } else {
-          ngModel.$setValidity('minFileUploadSize', true);
+          ngModel.$setValidity("minFileUploadSize", true);
         }
 
         scope.$apply();
 
         return valid;
-      }
+      };
 
-      var getFile = function(file) {
-        if(confirm("Would you like to upload this file?")){
-            // Reset all errors so we start with a clean slate
-            Object.keys(ngModel.$error).forEach(function(k) {
-              ngModel.$setValidity(k, true);
-            });
+      var getFile = function (file) {
+        if (confirm("Would you like to upload this file?")) {
+          // Reset all errors so we start with a clean slate
+          Object.keys(ngModel.$error).forEach(function (k) {
+            ngModel.$setValidity(k, true);
+          });
 
-            if(!file) {
-              return;
-            }
+          if (!file) {
+            return;
+          }
 
-            if(!validateFile(file)) {
-              return;
-            }
+          if (!validateFile(file)) {
+            return;
+          }
 
-            scope.file = file;
-            scope.fileName = file.name;
-            scope.hasFile = true;
-            scope.file.ext = file.name.split('.').slice(-1)[0];
-            scope.fileUploader.uploadFile(file, ngModel, scope);
+          scope.file = file;
+          scope.fileName = file.name;
+          scope.hasFile = true;
+          scope.file.ext = file.name.split(".").slice(-1)[0];
+          scope.fileUploader.uploadFile(file, ngModel, scope);
         }
-      }
+      };
 
-      scope.removeFile = function(e) {
+      scope.removeFile = function (e) {
         // $.delete not supported by jquery, use this instead.
         var http = new XMLHttpRequest();
-        var url = scope.fileUploader.apiPath+'?file_id='+scope.fileUploader.fileId;
-        http.open('DELETE', url, true);
-        http.send('');
+        var url =
+          scope.fileUploader.apiPath + "?file_id=" + scope.fileUploader.fileId;
+        http.open("DELETE", url, true);
+        http.send("");
 
         e.preventDefault();
         e.stopPropagation();
@@ -246,14 +267,13 @@ function fileUploadDirective($rootScope) {
         scope.fileName = undefined;
         scope.fileUploader.reset(scope);
         ngModel.$setViewValue(undefined);
-      }
+      };
 
-      angular.element(scope.fileInput).bind('change', function(e) {
+      angular.element(scope.fileInput).bind("change", function (e) {
         getFile(e.target.files[0]);
       });
-
-    }
-  }
+    },
+  };
 }
 
 function formatFileSize(size) {
@@ -264,19 +284,19 @@ function formatFileSize(size) {
     var sizeType = undefined;
 
     if (size > 1024 * 1024 * 1024) {
-      formattedSize = (((size / 1024) / 1024) / 1024).toFixed(1);
-      sizeType = 'GB';
+      formattedSize = (size / 1024 / 1024 / 1024).toFixed(1);
+      sizeType = "GB";
     } else if (size > 1024 * 1024) {
-      formattedSize = ((size / 1024) / 1024).toFixed(1);
-      sizeType = 'MB';
+      formattedSize = (size / 1024 / 1024).toFixed(1);
+      sizeType = "MB";
     } else if (size > 1024 * 1024) {
       formattedSize = (size / 1024).toFixed(1);
-      sizeType = 'KB';
+      sizeType = "KB";
     } else {
-      formattedSize = size
-      sizeType = 'B';
+      formattedSize = size;
+      sizeType = "B";
     }
-    sizeToReturn = formattedSize + ' ' + sizeType;
+    sizeToReturn = formattedSize + " " + sizeType;
   }
   return sizeToReturn;
 }

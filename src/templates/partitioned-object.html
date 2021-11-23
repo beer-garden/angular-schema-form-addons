@@ -1,12 +1,18 @@
 <fieldset
   class="form-group schema-form-fieldset {{form.htmlClass}}"
   ng-disabled="form.readonly"
-  sf-field-transclude>
-
-  <div style="border: 1px solid #ddd; border-radius: 4px; padding: 5px 15px 10px">
-
+  sf-field-transclude
+>
+  <div
+    style="border: 1px solid #ddd; border-radius: 4px; padding: 5px 15px 10px"
+  >
     <div>
-      <div style="font-size: 21px; border-bottom: 1px solid #ddd" ng-class="{'sr-only': !showTitle() }">{{ form.title }}</div>
+      <div
+        style="font-size: 21px; border-bottom: 1px solid #ddd"
+        ng-class="{'sr-only': !showTitle() }"
+      >
+        {{ form.title }}
+      </div>
       <div class="help-block" sf-message="form.description"></div>
     </div>
 
@@ -15,12 +21,14 @@
     <uib-accordion ng-if="form.hasPartition">
       <div uib-accordion-group class="panel panel-default">
         <uib-accordion-heading>
-          <span class="glyphicon glyphicon-plus-sign" style="margin-right:8px;"></span>
+          <span
+            class="glyphicon glyphicon-plus-sign"
+            style="margin-right: 8px"
+          ></span>
           <span>{{form.accordionHeading}}</span>
         </uib-accordion-heading>
         <div sf-transclude-nomatch></div>
       </div>
     </uib-accordion>
-
   </div>
 </fieldset>

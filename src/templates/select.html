@@ -1,15 +1,14 @@
 <div
   class="form-group {{form.htmlClass}}"
-  ng-class="{'has-error': hasError(), 'has-success': hasSuccess()}">
-
-  <label
-    class="control-label {{form.labelHtmlClass}}"
-    ng-show="showTitle()"
-  >{{form.title}}</label>
+  ng-class="{'has-error': hasError(), 'has-success': hasSuccess()}"
+>
+  <label class="control-label {{form.labelHtmlClass}}" ng-show="showTitle()"
+    >{{form.title}}</label
+  >
 
   <span
     class="glyphicon glyphicon-info-sign"
-    style="cursor: default;"
+    style="cursor: default"
     ng-if="form.fetchErrorMessage"
     uib-popover="{{form.fetchErrorMessage}}"
     popover-title="Error Populating Choices"
@@ -28,7 +27,6 @@
   ></span>
 
   <div class="form-group">
-
     <button
       type="button"
       class="btn btn-default {{form.fieldHtmlClass}}"
@@ -41,12 +39,9 @@
       data-placeholder="{{form.placeholder || form.schema.placeholder || ('Select One')}}"
       data-placement="{{form.options.placement || 'bottom-left'}}"
       bs-options="item.value as item.name for item in form.titleMap"
-      bs-select>
-    </button>
+      bs-select
+    ></button>
 
-    <div
-      class="help-block"
-      sf-message="form.description">
-    </div>
+    <div class="help-block" sf-message="form.description"></div>
   </div>
 </div>
