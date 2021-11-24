@@ -26,7 +26,6 @@ function fileUploadBytesDirective($rootScope) {
       };
 
       scope.removeFile = function () {
-        console.log("testing remove");
         document.getElementById(scope.key).value = "";
         scope.hasFile = false;
         scope.fileName = null;
