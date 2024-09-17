@@ -1,4 +1,5 @@
 import angular from "angular";
+import CryptoJS from 'crypto-js';
 
 class FileUploader {
   constructor(url_prefix) {
@@ -119,9 +120,29 @@ class FileUploader {
     reader.readAsDataURL(chunk);
   }
 
-  uploadFile(file, ngModel, scope) {
+  calculateMD5(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+  
+      reader.onload = (event) => {
+        const wordArray = CryptoJS.lib.WordArray.create(event.target.result);
+        const hash = CryptoJS.MD5(wordArray);
+        resolve(hash.toString(CryptoJS.enc.Hex));
+      };
+  
+      reader.onerror = (error) => {
+        reject(error);
+      };
+  
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  async uploadFile(file, ngModel, scope) {
     this.file = file;
     this.numChunks = Math.ceil(file.size / this.chunkSize);
+
+    this.md5_sum = await this.calculateMD5(file);
 
     $.get(
       this.apiPath +
@@ -130,7 +151,9 @@ class FileUploader {
         "&file_size=" +
         this.file.size +
         "&chunk_size=" +
-        this.chunkSize
+        this.chunkSize +
+        "&md5_sum=" +
+        this.md5_sum
     )
       .done((data) => {
         this.fileId = data["details"]["file_id"];
