@@ -26,7 +26,7 @@
       ng-click="fileInput.click()"
       class="form-control input-lg"
       readonly
-      placeholder="{{fileName || 'Upload File'}}"
+      placeholder="{{fileName || form.placeholder || 'Upload File'}}"
     />
     <span class="input-group-btn">
       <button
